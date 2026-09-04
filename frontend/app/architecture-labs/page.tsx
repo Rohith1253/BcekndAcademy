@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getApiUrl } from '@/lib/http';
 
 interface ArchitectureLab {
   id: string;
@@ -22,7 +23,7 @@ export default function ArchitectureLabsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/architecture-labs')
+    fetch(getApiUrl('/api/architecture-labs'))
       .then(res => res.json())
       .then(data => {
         if (data.success) {

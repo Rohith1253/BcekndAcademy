@@ -1,26 +1,25 @@
 services:
   - type: web
-    name: backend-academy-api
-    runtime: node
+    name: backend-learning-platform-api
+    env: node
+    plan: free
     rootDir: backend
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    startCommand: npm start
     healthCheckPath: /health
-    plan: free
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 5000
-      - key: FRONTEND_URL
-        value: https://frontend-taupe-gamma-50.vercel.app
-      - key: CLIENT_URL
-        value: https://frontend-taupe-gamma-50.vercel.app
-      - key: MONGO_URI
+        value: 10000
+      - key: CODE_EXECUTION_PROVIDER
+        value: mock
+      - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: GEMINI_API_KEY
+      - key: CLIENT_URL
         sync: false
-      - key: GEMINI_MODEL
-        value: gemini-3.6-flash
+      - key: FRONTEND_URL
+        sync: false

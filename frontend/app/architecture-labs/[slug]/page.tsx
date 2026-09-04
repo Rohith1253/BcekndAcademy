@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { getApiUrl, getAuthHeaders } from '@/lib/http';
 
 interface Step {
   step: number;
@@ -29,7 +30,7 @@ export default function ArchitectureLabDetail({ params }: { params: Promise<{ sl
   const [submissionFeedback, setSubmissionFeedback] = useState<any>(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/architecture-labs/${slug}`)
+    fetch(getApiUrl(`/api/architecture-labs/${slug}`))
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data?.lab) {
@@ -55,7 +56,7 @@ export default function ArchitectureLabDetail({ params }: { params: Promise<{ sl
         parsed = JSON.parse(customParams);
       } catch (e) {}
 
-      const res = await fetch(`http://localhost:5000/api/architecture-labs/${slug}/simulate`, {
+      const res = await fetch(getApiUrl(`/api/architecture-labs/${slug}/simulate`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,7 +85,7 @@ export default function ArchitectureLabDetail({ params }: { params: Promise<{ sl
     setSubmitting(true);
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(`http://localhost:5000/api/architecture-labs/${slug}/submit`, {
+      const res = await fetch(getApiUrl(`/api/architecture-labs/${slug}/submit`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
