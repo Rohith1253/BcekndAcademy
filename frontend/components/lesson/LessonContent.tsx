@@ -4,6 +4,8 @@ import React from "react";
 import { AlertCircle, Lightbulb, BookOpen, CheckCircle2, Zap } from "lucide-react";
 import type { ContentBlock } from "@/data/lessons/types";
 import CodeBlock from "@/components/lesson/CodeBlock";
+import InteractiveCodeBlock from "@/components/lesson/InteractiveCodeBlock";
+import QuickCheck from "@/components/lesson/QuickCheck";
 import InteractiveDiagram from "@/components/lesson/InteractiveDiagram";
 
 interface LessonContentProps {
@@ -54,23 +56,25 @@ function renderContentBlock(block: any, index: number) {
       );
 
     case "code":
+    case "interactive_code":
       return (
-        <div key={index} className="my-6">
-          {block.title && (
-            <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-t border-x border-white/10 rounded-t-xl text-xs font-mono text-slate-400">
-              <span>{block.title}</span>
-              <span className="uppercase text-cyan-400 font-semibold">{block.language || "code"}</span>
-            </div>
-          )}
-          <CodeBlock
-            code={block.code || ""}
-            language={block.language || "javascript"}
-            filename={block.filename}
-          />
-          {block.caption && (
-            <p className="mt-2 text-xs italic text-slate-400 px-2">{block.caption}</p>
-          )}
-        </div>
+        <InteractiveCodeBlock
+          key={index}
+          initialCode={block.code || block.content || ""}
+          language={block.language || "javascript"}
+          title={block.title}
+          filename={block.filename}
+        />
+      );
+
+    case "quick_check":
+    case "checkpoint":
+      return (
+        <QuickCheck
+          key={index}
+          questions={block.questions || block.data?.questions}
+          title={block.title || "Concept Check"}
+        />
       );
 
     case "callout":

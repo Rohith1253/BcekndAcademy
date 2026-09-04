@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, RotateCcw, Trophy, Sparkles, HelpCircle, AlertCircle } from "lucide-react";
 import type { QuizQuestion } from "@/data/lessons/types";
 import { useClient } from "@/lib/store";
-import { getApiUrl } from "@/lib/http";
+import { api } from "@/lib/api";
 
 interface QuizPreviewProps {
   questions: QuizQuestion[];
@@ -108,19 +108,13 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
       const clientScore = Math.round((correctCount / questions.length) * 100);
 
       if (user && lessonId) {
-        const res = await fetch(getApiUrl("/api/quiz/submit"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            lessonId,
-            answers: formattedAnswers,
-            timeSpent: 45,
-          }),
-          credentials: "include",
-        });
+        const json = await api.post("/api/quiz/submit", {
+          lessonId,
+          answers: formattedAnswers,
+          timeSpent: 45,
+        }).catch(() => null);
 
-        const json = await res.json();
-        if (json.success && json.data?.result) {
+        if (json?.success && json.data?.result) {
           setServerResult({
             score: json.data.result.score,
             correctAnswers: json.data.result.correctAnswers,

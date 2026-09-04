@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, ArrowLeft, ArrowRight, Trophy, Sparkles, BookOpen, Code2 } from "lucide-react";
+import { CheckCircle2, ArrowLeft, ArrowRight, Trophy, Sparkles, BookOpen, Code2, Award } from "lucide-react";
 import { useClient } from "@/lib/store";
-import { getApiUrl } from "@/lib/http";
+import { api } from "@/lib/api";
 import LessonHeader from "@/components/lesson/LessonHeader";
 import LessonSidebar from "@/components/lesson/LessonSidebar";
 import LessonContent from "@/components/lesson/LessonContent";
@@ -30,47 +30,52 @@ export default function LessonClientWrapper({
   const [isCompleted, setIsCompleted] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [completionMessage, setCompletionMessage] = useState("");
+  const [courseCompletedCelebration, setCourseCompletedCelebration] = useState<{
+    bonusXP: number;
+    achievements: any[];
+  } | null>(null);
 
   // 1. Load lesson context & record access
   useEffect(() => {
     async function initLessonData() {
       try {
-        const ctxRes = await fetch(getApiUrl(`/api/lessons/${slug}`));
-        const ctxJson = await ctxRes.json();
-        if (ctxJson.success && ctxJson.data) {
+        const ctxJson = await api.get(`/api/lessons/${slug}`).catch(() => null);
+        if (ctxJson?.success && ctxJson.data) {
           setLessonContext(ctxJson.data);
+        }
+
+        const parentCourseSlug = ctxJson?.data?.course?.slug || "backend-node-js";
+
+        // Try learning summary first
+        const summaryJson = await api.get(`/api/learning/courses/${parentCourseSlug}/summary`).catch(() => null);
+        if (summaryJson?.success && summaryJson.data) {
+          setCourseProgress(summaryJson.data);
+          const allSummaryLessons = summaryJson.data.modules?.flatMap((m: any) => m.lessons) || [];
+          const active = allSummaryLessons.find((l: any) => (l.slug || l) === slug);
+          if (active?.isCompleted || active?.completed || active?.status === "completed") {
+            setIsCompleted(true);
+          }
+        } else {
+          // Fallback to course progress
+          const progJson = await api.get(`/api/courses/${parentCourseSlug}/progress`).catch(() => null);
+          if (progJson?.success && progJson.data) {
+            setCourseProgress(progJson.data);
+            const activeProgress = progJson.data.modules
+              ?.flatMap((m: any) => m.lessons)
+              ?.find((l: any) => l.slug === slug);
+            if (activeProgress?.completed || activeProgress?.status === "completed") {
+              setIsCompleted(true);
+            }
+          }
         }
 
         if (!user) return;
 
-        await fetch(getApiUrl("/api/progress"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            lessonId: slug,
-            status: "in-progress",
-          }),
-        });
-
-        const parentCourseSlug = ctxJson.data?.course?.slug || "backend-node-js";
-
-        const progRes = await fetch(getApiUrl(`/api/courses/${parentCourseSlug}/progress`), {
-          credentials: "include",
-        });
-        const progJson = await progRes.json();
-
-        if (progJson.success && progJson.data) {
-          setCourseProgress(progJson.data);
-
-          const activeProgress = progJson.data.modules
-            ?.flatMap((m: any) => m.lessons)
-            ?.find((l: any) => l.slug === slug);
-
-          if (activeProgress?.completed || activeProgress?.status === "completed") {
-            setIsCompleted(true);
-          }
-        }
+        // Record in-progress status
+        await api.post("/api/progress", {
+          lessonId: slug,
+          status: "in-progress",
+        }).catch(() => null);
       } catch (err) {
         console.error("Lesson initialization error:", err);
       }
@@ -79,33 +84,51 @@ export default function LessonClientWrapper({
     initLessonData();
   }, [slug, user]);
 
-  // 2. Complete Lesson Handler (Idempotent XP)
+  // 2. Complete Lesson Handler (Idempotent XP + Course Completion Bonus)
   async function handleMarkComplete() {
     if (!user || completing) return;
     setCompleting(true);
 
     try {
-      const res = await fetch(getApiUrl("/api/progress"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
+      const res = await api.post(`/api/learning/lessons/${slug}/complete`, {
+        lessonId: slug,
+        progressPercentage: 100,
+        timeSpent: 120,
+      }).catch(async () => {
+        // Fallback to general progress endpoint
+        return await api.post("/api/progress", {
           lessonId: slug,
           status: "completed",
           progressPercentage: 100,
-        }),
+        });
       });
 
-      const json = await res.json();
-
-      if (json.success && json.data) {
+      if (res?.success && res.data) {
         setIsCompleted(true);
-        if (json.data.xpEarned > 0) {
-          setCompletionMessage(`🎉 Lesson Completed! +${json.data.xpEarned} XP awarded!`);
+        const earnedXP = res.data.earnedXP ?? res.data.xpEarned ?? 0;
+        const isCourseComplete = res.data.isCourseCompleted ?? false;
+        const bonusXP = res.data.courseBonusXP ?? 0;
+
+        if (isCourseComplete) {
+          setCourseCompletedCelebration({
+            bonusXP: bonusXP || 500,
+            achievements: res.data.unlockedAchievements || [],
+          });
+          setCompletionMessage(`🏆 COURSE COMPLETED! +${earnedXP} Lesson XP + 🌟 +${bonusXP || 500} XP Course Master Bonus!`);
+        } else if (earnedXP > 0) {
+          setCompletionMessage(`🎉 Lesson Completed! +${earnedXP} XP awarded!`);
         } else {
           setCompletionMessage("✓ Lesson marked as complete (XP already claimed).");
         }
+
         await refreshUser();
+
+        // Refresh course summary
+        const parentCourseSlug = lessonContext?.course?.slug || "backend-node-js";
+        const refreshed = await api.get(`/api/learning/courses/${parentCourseSlug}/summary`).catch(() => null);
+        if (refreshed?.success && refreshed.data) {
+          setCourseProgress(refreshed.data);
+        }
       }
     } catch (err) {
       console.error("Mark complete error:", err);
@@ -183,8 +206,47 @@ export default function LessonClientWrapper({
             </div>
           </div>
 
+          {/* Course Completed Celebration Banner */}
+          {courseCompletedCelebration && (
+            <div className="mb-8 rounded-3xl border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-teal-950/80 p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden animate-fade-in">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shrink-0">
+                    <Trophy className="h-8 w-8 text-emerald-400 animate-bounce" />
+                  </div>
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono font-bold mb-2">
+                      <Sparkles className="h-3.5 w-3.5" /> COURSE COMPLETED
+                    </div>
+                    <h3 className="text-2xl font-black text-white">
+                      Congratulations! You mastered {courseTitle}!
+                    </h3>
+                    <p className="text-sm text-slate-300 mt-1">
+                      You've completed all lessons in this curriculum and claimed the <span className="text-emerald-400 font-bold">+{courseCompletedCelebration.bonusXP} XP</span> Master Bonus.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  <a
+                    href={`/courses/${courseSlug}`}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg transition"
+                  >
+                    View Syllabus & Certificate
+                  </a>
+                  <a
+                    href="/challenges"
+                    className="px-4 py-2.5 rounded-xl border border-white/20 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition"
+                  >
+                    Explore Challenges
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Completion Toast Message */}
-          {completionMessage && (
+          {completionMessage && !courseCompletedCelebration && (
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-200">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-emerald-300" />

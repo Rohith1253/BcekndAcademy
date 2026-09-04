@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { QuizAttempt } from "../models/QuizAttempt";
+import { Progress } from "../models/Progress";
 import { ProgressService } from "../services/progressService";
 import { MULTI_LANGUAGE_LESSONS } from "../data/multi-language-lessons-data";
 import { ALL_REAL_LESSONS } from "../data/all-lessons-content";
@@ -16,12 +17,15 @@ export async function submitQuiz(req: AuthenticatedRequest, res: Response) {
       return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
-    const { lessonSlug, courseSlug, answers, timeSpentSeconds } = req.body;
+    const lessonSlug = req.body.lessonSlug || req.body.lessonId;
+    const courseSlug = req.body.courseSlug;
+    const answers = req.body.answers;
+    const timeSpentSeconds = Number(req.body.timeSpentSeconds || req.body.timeSpent) || 0;
 
     if (!lessonSlug || !answers || !Array.isArray(answers)) {
       return res.status(400).json({
         success: false,
-        error: "Missing required 'lessonSlug' or 'answers' array.",
+        error: "Missing required 'lessonSlug' (or 'lessonId') or 'answers' array.",
       });
     }
 
@@ -31,11 +35,11 @@ export async function submitQuiz(req: AuthenticatedRequest, res: Response) {
     const masterQuiz = multiLesson?.quiz || legacyLesson?.quiz || [];
 
     const evaluatedAnswers = answers.map((userAns: any) => {
-      const q = masterQuiz.find((mq: any) => mq.id === userAns.questionId);
+      const q = masterQuiz.find((mq: any) => String(mq.id) === String(userAns.questionId));
       const correctIdx = q ? (q.correctOptionIndex !== undefined ? q.correctOptionIndex : (q as any).correct) : 0;
       const isCorrect = userAns.selectedOptionIndex === correctIdx;
       return {
-        questionId: userAns.questionId,
+        questionId: String(userAns.questionId),
         selectedOptionIndex: userAns.selectedOptionIndex,
         isCorrect,
       };
@@ -51,7 +55,7 @@ export async function submitQuiz(req: AuthenticatedRequest, res: Response) {
       courseSlug: courseSlug || multiLesson?.courseSlug,
       answers: evaluatedAnswers,
       score,
-      timeSpentSeconds: Number(timeSpentSeconds) || 0,
+      timeSpentSeconds,
     });
 
     return res.status(200).json({
@@ -65,6 +69,15 @@ export async function submitQuiz(req: AuthenticatedRequest, res: Response) {
         attemptId: result.quizAttempt._id,
         userLevelInfo: result.userLevelInfo,
         unlockedAchievements: result.unlockedAchievements,
+        result: {
+          score,
+          correctAnswers: correctCount,
+          totalQuestions,
+          isPassed: result.isPassed,
+          passed: result.isPassed,
+          xpEarned: result.xpEarned,
+          alreadyCompleted: result.isPassed && result.xpEarned === 0,
+        },
       },
     });
   } catch (error: any) {
@@ -77,8 +90,54 @@ export async function submitQuiz(req: AuthenticatedRequest, res: Response) {
 }
 
 /**
- * GET /api/quizzes/history (also /api/quiz/history)
- * Returns user's quiz attempt history.
+ * GET /api/quiz/check/:lessonSlug
+ * Checks quiz unlock eligibility and previous attempts for a lesson.
+ */
+export async function checkQuizStatus(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    const lessonSlug = req.params.lessonSlug;
+
+    const multiLesson = MULTI_LANGUAGE_LESSONS.find((l) => l.slug === lessonSlug);
+    const legacyLesson = ALL_REAL_LESSONS.find((l) => l.slug === lessonSlug);
+    const hasQuiz = Boolean(multiLesson?.quiz?.length || legacyLesson?.quiz?.length);
+
+    let isUnlocked = true;
+    let isPassed = false;
+    let bestScore = 0;
+    let attemptsCount = 0;
+
+    if (userId) {
+      const attempts = await QuizAttempt.find({ userId, lessonSlug }).sort({ score: -1 }).lean();
+      attemptsCount = attempts.length;
+      if (attempts.length > 0) {
+        bestScore = attempts[0].score;
+        isPassed = bestScore >= 70;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        lessonSlug,
+        hasQuiz,
+        isUnlocked,
+        isPassed,
+        bestScore,
+        attemptsCount,
+        passingScore: 70,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to check quiz status",
+    });
+  }
+}
+
+/**
+ * GET /api/quizzes/history
  */
 export async function getQuizHistory(req: AuthenticatedRequest, res: Response) {
   try {
@@ -106,8 +165,7 @@ export async function getQuizHistory(req: AuthenticatedRequest, res: Response) {
 }
 
 /**
- * GET /api/quizzes/stats (also /api/quiz/stats)
- * Returns user's overall quiz stats.
+ * GET /api/quizzes/stats
  */
 export async function getQuizStats(req: AuthenticatedRequest, res: Response) {
   try {

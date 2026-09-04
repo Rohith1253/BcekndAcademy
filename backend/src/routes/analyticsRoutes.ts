@@ -8,6 +8,7 @@ import {
 
 const router = Router();
 
+router.get("/", authenticateUser, getAnalyticsOverview);
 router.get("/overview", authenticateUser, getAnalyticsOverview);
 router.get("/activity", authenticateUser, getAnalyticsActivity);
 router.get("/languages", authenticateUser, getAnalyticsLanguages);
