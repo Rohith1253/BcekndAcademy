@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --background: #070913;
+  --foreground: #e2e8f0;
+  --surface: rgba(15, 23, 42, 0.9);
+  --surface-card: #0d1224;
+  --surface-border: rgba(148, 163, 184, 0.12);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --primary: #38bdf8;
+  --primary-hover: #0ea5e9;
+  --accent: #6366f1;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: rgba(255, 255, 255, 0.95);
+  --surface-card: #ffffff;
+  --surface-border: rgba(15, 23, 42, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --accent: #4f46e5;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #070913;
+  --foreground: #e2e8f0;
+  --surface: rgba(15, 23, 42, 0.9);
+  --surface-card: #0d1224;
+  --surface-border: rgba(148, 163, 184, 0.12);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --primary: #38bdf8;
+  --primary-hover: #0ea5e9;
+  --accent: #6366f1;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+[data-theme="dark"] body,
+html.dark body {
+  background-image: radial-gradient(circle at top, rgba(99, 102, 241, 0.15), transparent 28%),
+    linear-gradient(180deg, #070913 0%, #070913 100%);
+}
+
+[data-theme="light"] body {
+  background-image: radial-gradient(circle at top, rgba(99, 102, 241, 0.06), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
