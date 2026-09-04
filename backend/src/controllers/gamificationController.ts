@@ -158,3 +158,39 @@ export async function getGamificationSummary(req: AuthenticatedRequest, res: Res
     return res.status(500).json({ success: false, error: error.message || "Failed to fetch gamification summary" });
   }
 }
+
+
+export async function getStreakStatusController(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+    const status = await StreakService.getStreakStatus(userId);
+    return res.status(200).json({ success: true, data: status });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error.message || "Failed to fetch streak status" });
+  }
+}
+
+export async function getLeaderboardController(req: Request, res: Response) {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const users = await User.find({}, { name: 1, email: 1, totalXP: 1, currentLevel: 1, avatar: 1 })
+      .sort({ totalXP: -1 })
+      .limit(limit)
+      .lean();
+
+    const leaderboard = users.map((u, idx) => ({
+      rank: idx + 1,
+      id: u._id,
+      name: u.name || "Anonymous",
+      totalXP: u.totalXP || 0,
+      currentLevel: u.currentLevel || 1,
+    }));
+
+    return res.status(200).json({ success: true, data: { leaderboard, total: leaderboard.length } });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error.message || "Failed to fetch leaderboard" });
+  }
+}

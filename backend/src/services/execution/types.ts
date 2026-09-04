@@ -37,6 +37,8 @@ export interface ExecutionLog {
   message: string;
 }
 
+export type ExecutionMode = "simulated" | "sandboxed";
+
 export interface ExecutionResponse {
   status: "success" | "error" | "timeout" | "compilation_error";
   stdout: string;
@@ -44,6 +46,7 @@ export interface ExecutionResponse {
   executionTime: number;
   exitCode: number;
   provider: "mock" | "disabled" | "piston" | "judge0";
+  executionMode: ExecutionMode;
   language: string;
   compiled?: boolean;
 }
@@ -68,15 +71,13 @@ export interface TestCaseResult {
 export interface ChallengeEvaluationResult {
   status: "passed" | "failed" | "error";
   score: number;
-  passedTests: number;
   totalTests: number;
+  passedTests: number;
+  results: TestCaseResult[];
   earnedXP: number;
   alreadyCompleted: boolean;
-  visibleTestResults: TestCaseResult[];
-  hiddenTestsPassed: number;
-  hiddenTestsTotal: number;
-  executionTime: number;
-  logs: ExecutionLog[];
-  message: string;
-  provider: "mock" | "disabled" | "piston" | "judge0";
+  executionTimeMs: number;
+  provider: string;
+  executionMode: ExecutionMode;
+  error?: string;
 }

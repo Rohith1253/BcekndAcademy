@@ -1,90 +1,93 @@
 import express from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db";
-
-import authRoutes from "./routes/authRoutes";
 import { rateLimiter } from "./middleware/rateLimit";
+import { getHealth } from "./controllers/healthController";
+import authRoutes from "./routes/authRoutes";
 import courseRoutes from "./routes/courseRoutes";
 import lessonRoutes from "./routes/lessonRoutes";
 import progressRoutes from "./routes/progressRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import challengeRoutes from "./routes/challengeRoutes";
+import codeRoutes from "./routes/codeRoutes";
+import learningRoutes from "./routes/learningRoutes";
+import analyticsRoutes from "./routes/analyticsRoutes";
+import codingLabRoutes from "./routes/codingLabRoutes";
 import gameRoutes from "./routes/gameRoutes";
 import noteRoutes from "./routes/noteRoutes";
 import bookmarkRoutes from "./routes/bookmarkRoutes";
 import achievementRoutes from "./routes/achievementRoutes";
-import healthRoutes from "./routes/healthRoutes";
-import codingLabRoutes from "./routes/codingLabRoutes";
 import languageRoutes from "./routes/languageRoutes";
-import codeRoutes from "./routes/codeRoutes";
-import learningRoutes from "./routes/learningRoutes";
-import analyticsRoutes from "./routes/analyticsRoutes";
 import gamificationRoutes from "./routes/gamificationRoutes";
-import { getHealth } from "./controllers/healthController";
+import apiLabRoutes from "./routes/apiLabRoutes";
+import architectureLabRoutes from "./routes/architectureLabRoutes";
+import interviewRoutes from "./routes/interviewRoutes";
+import healthRoutes from "./routes/healthRoutes";
 
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 5000;
+const PORT = parseInt(process.env.PORT || "5000", 10);
 
-// Trust reverse proxy (Render, Vercel, AWS ALB) for secure cookies and accurate client IP
-app.set("trust proxy", 1);
-
-// Configure CORS allowed origins
-const rawAllowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.CLIENT_URL,
+// Robust CORS Configuration
+const allowedOrigins = [
   "http://localhost:3000",
-  "http://127.0.0.1:3000",
   "http://localhost:3001",
+  "http://127.0.0.1:3000",
   "http://127.0.0.1:3001",
-  "http://localhost:3002",
-  "http://127.0.0.1:3002",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
+  process.env.CLIENT_URL,
 ].filter(Boolean) as string[];
 
-const normalizedAllowedOrigins = Array.from(
-  new Set(rawAllowedOrigins.map((origin) => origin.trim().replace(/\/+$/, "")))
+const normalizedAllowedOrigins = allowedOrigins.map(origin =>
+  origin.replace(/\/+$/, "")
 );
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, server-to-server, health probes)
-    if (!origin) {
+    if (!origin) return callback(null, true);
+    const normalizedOrigin = origin.replace(/\/+$/, "");
+    if (
+      normalizedAllowedOrigins.includes(normalizedOrigin) ||
+      process.env.NODE_ENV !== "production"
+    ) {
       return callback(null, true);
     }
-    const cleanOrigin = origin.trim().replace(/\/+$/, "");
-    if (normalizedAllowedOrigins.includes(cleanOrigin)) {
-      return callback(null, true);
-    }
-
-    // Allow localhost development ports in non-production environments
-    try {
-      const parsed = new URL(origin);
-      if (
-        (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") &&
-        (parsed.protocol === "http:" || parsed.protocol === "https:")
-      ) {
-        return callback(null, true);
-      }
-      // Allow Vercel preview and production subdomains
-      if (parsed.protocol === "https:" && parsed.hostname.endsWith(".vercel.app")) {
-        return callback(null, true);
-      }
-    } catch {}
-
-    return callback(null, false);
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+    "x-request-id"
+  ],
+  exposedHeaders: ["Set-Cookie", "x-request-id"],
+  maxAge: 86400,
 };
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
+
+// Security Headers & Request Correlation
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  const reqId = (req.headers["x-request-id"] as string) || "req_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+  res.setHeader("X-Request-Id", reqId);
+  (req as any).id = reqId;
+  next();
+});
+
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(cookieParser());
@@ -107,6 +110,9 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/backend-languages", languageRoutes);
+app.use("/api/api-labs", apiLabRoutes);
+app.use("/api/architecture-labs", architectureLabRoutes);
+app.use("/api/interview", interviewRoutes);
 app.use("/api", gamificationRoutes);
 app.use("/api/health", healthRoutes);
 app.get("/health", getHealth);
@@ -145,12 +151,12 @@ async function startServer() {
     }
 
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`==================================================`);
-      console.log(`  🚀 BACKEND LEARNING ACADEMY API SERVER ACTIVE  `);
-      console.log(`  Listening on: http://0.0.0.0:${PORT}          `);
-      console.log(`  Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(`  Allowed Origins: ${normalizedAllowedOrigins.join(", ") || "(all allowed)"}`);
-      console.log(`==================================================`);
+      console.log("==================================================");
+      console.log("  🚀 BACKEND LEARNING ACADEMY API SERVER ACTIVE  ");
+      console.log("  Listening on: http://0.0.0.0:" + PORT);
+      console.log("  Environment: " + (process.env.NODE_ENV || "development"));
+      console.log("  Allowed Origins: " + (normalizedAllowedOrigins.join(", ") || "(all allowed)"));
+      console.log("==================================================");
     });
   } catch (error) {
     console.error("Failed to start backend server:", error);

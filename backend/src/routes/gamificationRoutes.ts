@@ -10,6 +10,8 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   getGamificationSummary,
+  getStreakStatusController,
+  getLeaderboardController,
 } from "../controllers/gamificationController";
 
 const router = Router();
@@ -31,6 +33,10 @@ router.get("/adaptive-learning/profile", authenticateUser, getAdaptiveProfile);
 
 // Milestones
 router.get("/milestones", authenticateUser, getUserMilestones);
+
+// Streaks & Leaderboard
+router.get("/streaks/me", authenticateUser, getStreakStatusController);
+router.get("/leaderboard", optionalAuthenticateUser, getLeaderboardController);
 
 // Notifications
 router.get("/notifications", authenticateUser, getNotifications);
