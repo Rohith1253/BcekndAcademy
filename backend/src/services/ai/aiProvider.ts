@@ -29,7 +29,7 @@ export class GeminiProvider implements ChatCapableProvider {
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || "";
-    this.model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    this.model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
   }
 
   isConfigured(): boolean {
@@ -39,10 +39,10 @@ export class GeminiProvider implements ChatCapableProvider {
   private getCandidateModels(): string[] {
     return [
       this.model.trim(),
-      "gemini-2.5-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
       "gemini-flash-latest",
-      "gemini-2.5-flash-lite",
-      "gemini-2.5-pro",
+      "gemini-3.6-pro",
     ].filter((m, i, arr) => m && arr.indexOf(m) === i);
   }
 
@@ -346,7 +346,7 @@ export class OpenRouterProvider implements AIProvider {
 export function getAIProvider(): AIProvider {
   const gemini = new GeminiProvider();
   if (gemini.isConfigured()) {
-    console.log(`[AI Provider] Selected Gemini (Model: ${process.env.GEMINI_MODEL || "gemini-2.5-flash"})`);
+    console.log(`[AI Provider] Selected Gemini (Model: ${process.env.GEMINI_MODEL || "gemini-3.6-flash"})`);
     return gemini;
   }
 
@@ -373,7 +373,7 @@ export function getAIProvider(): AIProvider {
 export function getChatProvider(): ChatCapableProvider {
   const gemini = new GeminiProvider();
   if (gemini.isConfigured()) {
-    console.log(`[AI Provider] Selected Gemini for chat (Model: ${process.env.GEMINI_MODEL || "gemini-2.5-flash"})`);
+    console.log(`[AI Provider] Selected Gemini for chat (Model: ${process.env.GEMINI_MODEL || "gemini-3.6-flash"})`);
     return gemini;
   }
 
