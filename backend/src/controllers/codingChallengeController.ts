@@ -5,7 +5,11 @@ import { CodingChallenge } from "../models/CodingChallenge";
 import { CodingSubmission } from "../models/CodingSubmission";
 import { User } from "../models/User";
 import { getChallengeEvaluator, MAX_CODE_SIZE_BYTES } from "../services/execution";
-import { addXP, calculateLevelProgress } from "../services/xpService";
+import { XPService } from "../services/xpService";
+import { LevelService } from "../services/levelService";
+import { StreakService } from "../services/streakService";
+import { DailyChallengeService } from "../services/dailyChallengeService";
+import { MilestoneService } from "../services/milestoneService";
 import { AchievementService } from "../services/achievementService";
 
 /**
@@ -239,17 +243,29 @@ export async function submitChallengeSolution(req: AuthenticatedRequest, res: Re
 
     const isPassed = outcome.status === "passed";
 
-    // Update user XP if newly passed
+    // Update user XP if newly passed via centralized XPService
     let userLevelInfo = null;
+    let earnedXP = outcome.earnedXP;
     if (isPassed && !alreadyCompleted && outcome.earnedXP > 0) {
-      const dbUser = await User.findById(req.user.userId);
-      if (dbUser) {
-        const xpResult = addXP(dbUser.totalXP || 0, outcome.earnedXP);
-        dbUser.totalXP = xpResult.newXP;
-        dbUser.currentLevel = xpResult.newLevel;
-        await dbUser.save();
-        userLevelInfo = calculateLevelProgress(dbUser.totalXP);
-      }
+      const xpRes = await XPService.awardXP({
+        userId: req.user.userId,
+        sourceType: "coding_challenge",
+        sourceId: challenge.slug,
+        xpAmount: outcome.earnedXP,
+        metadata: { challengeId: challenge._id, language: targetLang },
+      });
+      earnedXP = xpRes.xpEarned;
+      userLevelInfo = xpRes.userLevelInfo;
+    }
+
+    if (isPassed) {
+      await StreakService.recordActivity({
+        userId: req.user.userId,
+        activityType: "challenge_completion",
+        activityId: challenge.slug,
+      });
+      await DailyChallengeService.completeDailyChallenge(req.user.userId, challenge.slug);
+      await MilestoneService.evaluateMilestones(req.user.userId);
     }
 
     // Record submission

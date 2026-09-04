@@ -9,7 +9,10 @@ import { CodingChallenge } from "../models/CodingChallenge";
 import { ALL_COURSES } from "../data/multi-language-courses-data";
 import { MULTI_LANGUAGE_LESSONS } from "../data/multi-language-lessons-data";
 import { ALL_REAL_LESSONS } from "../data/all-lessons-content";
-import { addXP, calculateLevelProgress } from "./xpService";
+import { XPService } from "./xpService";
+import { LevelService } from "./levelService";
+import { StreakService } from "./streakService";
+import { MilestoneService } from "./milestoneService";
 import { AchievementService } from "./achievementService";
 
 const COURSE1_SLUGS = new Set([
@@ -322,15 +325,26 @@ export class ProgressService {
         }
       }
 
-      const user = await User.findById(userObjId);
-      if (user) {
-        const xpResult = addXP(user.totalXP || 0, xpAwarded);
-        user.totalXP = xpResult.newXP;
-        user.currentLevel = xpResult.newLevel;
-        await ProgressService.updateUserStreak(user);
-        await user.save();
-        userLevelInfo = calculateLevelProgress(user.totalXP);
-      }
+      // Award lesson XP via centralized XPService
+      const xpRes = await XPService.awardXP({
+        userId: userObjId,
+        sourceType: "lesson_completion",
+        sourceId: lessonId,
+        xpAmount: xpAwarded,
+        metadata: { courseSlug: resolvedCourseSlug, isCourseCompleted },
+      });
+      xpAwarded = xpRes.xpEarned;
+      userLevelInfo = xpRes.userLevelInfo;
+
+      // Register streak activity
+      await StreakService.recordActivity({
+        userId: userObjId,
+        activityType: "lesson_completion",
+        activityId: lessonId,
+      });
+
+      // Evaluate milestones
+      await MilestoneService.evaluateMilestones(userObjId);
     }
 
     // 4. Auto-check achievements
@@ -416,16 +430,23 @@ export class ProgressService {
 
     let userLevelInfo = null;
     if (xpEarned > 0) {
-      const user = await User.findById(userObjId);
-      if (user) {
-        const xpResult = addXP(user.totalXP || 0, xpEarned);
-        user.totalXP = xpResult.newXP;
-        user.currentLevel = xpResult.newLevel;
-        await ProgressService.updateUserStreak(user);
-        await user.save();
-        userLevelInfo = calculateLevelProgress(user.totalXP);
-      }
+      const xpRes = await XPService.awardXP({
+        userId: userObjId,
+        sourceType: "quiz",
+        sourceId: lessonSlug,
+        xpAmount: xpEarned,
+        metadata: { score },
+      });
+      xpEarned = xpRes.xpEarned;
+      userLevelInfo = xpRes.userLevelInfo;
     }
+
+    await StreakService.recordActivity({
+      userId: userObjId,
+      activityType: "quiz_completion",
+      activityId: lessonSlug,
+    });
+    await MilestoneService.evaluateMilestones(userObjId);
 
     const achievementsResult = await AchievementService.checkAndUnlockAchievements(userObjId);
 

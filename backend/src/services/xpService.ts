@@ -1,87 +1,153 @@
-export const LEVEL_CONFIG: Record<number, number> = {
-  1: 0,
-  2: 100,
-  3: 250,
-  4: 500,
-  5: 1000,
-  6: 2000,
-  7: 3500,
-  8: 6000,
-  9: 10000,
-  10: 16000,
-};
+import mongoose from "mongoose";
+import { XPTransaction, XPSourceType } from "../models/XPTransaction";
+import { User } from "../models/User";
+import { LevelService, UserLevelInfo } from "./levelService";
+import { NotificationService } from "./notificationService";
 
-export const LEVEL_NAMES = [
-  "Novice",
-  "Apprentice",
-  "Learner",
-  "Developer",
-  "Senior Dev",
-  "Tech Lead",
-  "Architect",
-  "Principal",
-  "Master",
-  "Legend",
-] as const;
+export interface AwardXPParams {
+  userId: string | mongoose.Types.ObjectId;
+  sourceType: XPSourceType;
+  sourceId: string;
+  xpAmount: number;
+  metadata?: Record<string, any>;
+}
 
-export function calculateLevel(xp: number): number {
-  const safeXP = Math.max(0, xp || 0);
-  for (let level = 10; level >= 1; level--) {
-    if (safeXP >= (LEVEL_CONFIG[level] || 0)) {
-      return level;
+export interface AwardXPResult {
+  success: boolean;
+  alreadyAwarded: boolean;
+  xpEarned: number;
+  totalXP: number;
+  userLevelInfo: UserLevelInfo;
+  isLevelUp: boolean;
+  newLevel?: number;
+  newTitle?: string;
+}
+
+export class XPService {
+  /**
+   * Centralized, atomic, and idempotent XP award engine.
+   * Guarantees zero duplicate XP via database-level unique idempotencyKey.
+   */
+  static async awardXP(params: AwardXPParams): Promise<AwardXPResult> {
+    const { userId, sourceType, sourceId, xpAmount, metadata = {} } = params;
+    const userObjId = new mongoose.Types.ObjectId(String(userId));
+    const idempotencyKey = `${userObjId.toString()}:${sourceType}:${sourceId}`;
+
+    // 1. Check if transaction already exists
+    const existingTx = await XPTransaction.findOne({ idempotencyKey }).lean();
+    if (existingTx) {
+      const user = await User.findById(userObjId).lean();
+      const totalXP = user?.totalXP || 0;
+      const levelInfo = LevelService.getLevelInfo(totalXP);
+      return {
+        success: true,
+        alreadyAwarded: true,
+        xpEarned: 0,
+        totalXP,
+        userLevelInfo: levelInfo,
+        isLevelUp: false,
+      };
+    }
+
+    if (xpAmount <= 0) {
+      const user = await User.findById(userObjId).lean();
+      const totalXP = user?.totalXP || 0;
+      const levelInfo = LevelService.getLevelInfo(totalXP);
+      return {
+        success: true,
+        alreadyAwarded: false,
+        xpEarned: 0,
+        totalXP,
+        userLevelInfo: levelInfo,
+        isLevelUp: false,
+      };
+    }
+
+    try {
+      // 2. Create transaction record (unique index prevents race condition)
+      await XPTransaction.create({
+        userId: userObjId,
+        sourceType,
+        sourceId,
+        idempotencyKey,
+        xpAmount,
+        metadata,
+      });
+
+      // 3. Atomically update User totalXP
+      const prevUser = await User.findById(userObjId).lean();
+      const oldXP = prevUser?.totalXP || 0;
+
+      const updatedUser = await User.findByIdAndUpdate(
+        userObjId,
+        { $inc: { totalXP: xpAmount } },
+        { new: true }
+      ).lean();
+
+      const newXP = updatedUser?.totalXP || oldXP + xpAmount;
+      const levelInfo = LevelService.getLevelInfo(newXP);
+      const levelUpCheck = LevelService.checkLevelUp(oldXP, newXP);
+
+      // 4. Update level in User document if changed
+      if (levelUpCheck.isLevelUp) {
+        await User.findByIdAndUpdate(userObjId, { currentLevel: levelUpCheck.newLevel });
+        await NotificationService.createNotification({
+          userId: userObjId,
+          type: "level_up",
+          title: `Level Up! Reached Level ${levelUpCheck.newLevel}`,
+          message: `Congratulations! You earned the title of ${levelUpCheck.newTitle}.`,
+          metadata: { newLevel: levelUpCheck.newLevel, newTitle: levelUpCheck.newTitle },
+        });
+      }
+
+      return {
+        success: true,
+        alreadyAwarded: false,
+        xpEarned: xpAmount,
+        totalXP: newXP,
+        userLevelInfo: levelInfo,
+        isLevelUp: levelUpCheck.isLevelUp,
+        newLevel: levelUpCheck.newLevel,
+        newTitle: levelUpCheck.newTitle,
+      };
+    } catch (error: any) {
+      // Handle MongoDB duplicate key error code 11000 (race condition protection)
+      if (error.code === 11000) {
+        const user = await User.findById(userObjId).lean();
+        const totalXP = user?.totalXP || 0;
+        const levelInfo = LevelService.getLevelInfo(totalXP);
+        return {
+          success: true,
+          alreadyAwarded: true,
+          xpEarned: 0,
+          totalXP,
+          userLevelInfo: levelInfo,
+          isLevelUp: false,
+        };
+      }
+      throw error;
     }
   }
-  return 1;
+
+  /**
+   * Get XP transaction history for a user.
+   */
+  static async getUserHistory(userId: string | mongoose.Types.ObjectId, limit = 20) {
+    const userObjId = new mongoose.Types.ObjectId(String(userId));
+    return await XPTransaction.find({ userId: userObjId }).sort({ createdAt: -1 }).limit(limit).lean();
+  }
 }
 
-export function getNextLevelXP(level: number): number {
-  const nextLevel = Math.min(level + 1, 10);
-  return LEVEL_CONFIG[nextLevel] || LEVEL_CONFIG[10];
-}
 
-export function getXPForLevel(level: number): number {
-  return LEVEL_CONFIG[level] || 0;
-}
-
-export function calculateLevelProgress(totalXP: number) {
-  const currentXP = Math.max(0, totalXP || 0);
-  const currentLevel = calculateLevel(currentXP);
-  const levelStart = getXPForLevel(currentLevel);
-  const nextLevelXP = getNextLevelXP(currentLevel);
-
-  const currentLevelXP = currentXP - levelStart;
-  const neededXP = nextLevelXP - levelStart;
-  const progressPercentage =
-    neededXP > 0 ? Math.min(100, Math.round((currentLevelXP / neededXP) * 100)) : 100;
-
-  return {
-    level: currentLevel,
-    levelName: LEVEL_NAMES[currentLevel - 1] || "Developer",
-    totalXP: currentXP,
-    currentLevelXP,
-    nextLevelXP,
-    neededXP,
-    progressPercentage,
-  };
-}
-
-export function calculateXPProgress(currentXP: number, currentLevel: number) {
-  return calculateLevelProgress(currentXP);
+/**
+ * Backward compatibility helpers for existing codebase.
+ */
+export function calculateLevelProgress(totalXP: number = 0) {
+  return LevelService.getLevelInfo(totalXP);
 }
 
 export function addXP(currentXP: number, xpToAdd: number) {
-  const safeCurrent = Math.max(0, currentXP || 0);
-  const safeAdd = Math.max(0, xpToAdd || 0);
-  const newXP = safeCurrent + safeAdd;
-  const oldLevel = calculateLevel(safeCurrent);
-  const newLevel = calculateLevel(newXP);
-  const leveledUp = newLevel > oldLevel;
-
-  return {
-    newXP,
-    oldLevel,
-    newLevel,
-    leveledUp,
-    xpGained: safeAdd,
-  };
+  const newXP = currentXP + xpToAdd;
+  const levelInfo = LevelService.getLevelInfo(newXP);
+  return { newXP, newLevel: levelInfo.currentLevel, levelProgress: levelInfo };
 }

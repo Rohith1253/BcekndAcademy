@@ -10,6 +10,8 @@ export interface IUser extends Document {
   currentLevel: number;
   currentStreak: number;
   longestStreak: number;
+  lastActivityDate?: Date;
+  totalActiveDays?: number;
   lastLoginDate?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -44,13 +46,17 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 1,
       min: 1,
-      max: 10,
     },
     currentStreak: {
       type: Number,
       default: 0,
     },
     longestStreak: {
+      type: Number,
+      default: 0,
+    },
+    lastActivityDate: Date,
+    totalActiveDays: {
       type: Number,
       default: 0,
     },

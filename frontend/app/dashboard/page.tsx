@@ -1,3 +1,4 @@
+import GamificationCompactWidget from "@/components/dashboard/GamificationCompactWidget";
 import AchievementCard from "@/components/dashboard/AchievementCard";
 import ContinueLearning from "@/components/dashboard/ContinueLearning";
 import DailyChallenge from "@/components/dashboard/DailyChallenge";
@@ -14,6 +15,9 @@ export default function DashboardPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <WelcomeBanner />
         <StatsCards />
+
+        {/* Gamification & Daily Goals Hub Banner */}
+        <GamificationCompactWidget />
 
         {/* 11-Language Competency Matrix Overview */}
         <LanguageCompetencyWidget />

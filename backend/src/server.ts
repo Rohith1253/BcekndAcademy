@@ -21,6 +21,7 @@ import languageRoutes from "./routes/languageRoutes";
 import codeRoutes from "./routes/codeRoutes";
 import learningRoutes from "./routes/learningRoutes";
 import analyticsRoutes from "./routes/analyticsRoutes";
+import gamificationRoutes from "./routes/gamificationRoutes";
 import { getHealth } from "./controllers/healthController";
 
 dotenv.config();
@@ -106,6 +107,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/backend-languages", languageRoutes);
+app.use("/api", gamificationRoutes);
 app.use("/api/health", healthRoutes);
 app.get("/health", getHealth);
 
