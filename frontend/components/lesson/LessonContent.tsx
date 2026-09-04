@@ -10,7 +10,7 @@ interface LessonContentProps {
   blocks: ContentBlock[];
 }
 
-function renderContentBlock(block: ContentBlock, index: number) {
+function renderContentBlock(block: any, index: number) {
   switch (block.type) {
     case "heading":
       const HeadingTag = (`h${block.level || 2}` as any) as keyof React.JSX.IntrinsicElements;
@@ -29,25 +29,117 @@ function renderContentBlock(block: ContentBlock, index: number) {
     case "paragraph":
       return (
         <p key={index} className="text-base leading-8 text-slate-300 mb-4">
-          {block.content}
+          {block.content || block.body}
         </p>
+      );
+
+    case "text":
+      return (
+        <div key={index} className="my-6">
+          {block.title && (
+            <h3 className="text-xl font-bold text-cyan-300 mt-6 mb-3">
+              {block.title}
+            </h3>
+          )}
+          {block.body && (
+            <div className="space-y-3">
+              {block.body.split("\n\n").map((para: string, pIdx: number) => (
+                <p key={pIdx} className="text-base leading-8 text-slate-300">
+                  {para}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
       );
 
     case "code":
       return (
-        <CodeBlock
-          key={index}
-          code={block.code || ""}
-          language={block.language || "javascript"}
-          filename={block.filename}
-        />
+        <div key={index} className="my-6">
+          {block.title && (
+            <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-t border-x border-white/10 rounded-t-xl text-xs font-mono text-slate-400">
+              <span>{block.title}</span>
+              <span className="uppercase text-cyan-400 font-semibold">{block.language || "code"}</span>
+            </div>
+          )}
+          <CodeBlock
+            code={block.code || ""}
+            language={block.language || "javascript"}
+            filename={block.filename}
+          />
+          {block.caption && (
+            <p className="mt-2 text-xs italic text-slate-400 px-2">{block.caption}</p>
+          )}
+        </div>
+      );
+
+    case "callout":
+      const isWarn = block.variant === "warning";
+      const isSuccess = block.variant === "success";
+      const isTip = block.variant === "tip";
+      const borderClass = isWarn
+        ? "border-rose-500/30 bg-rose-500/10"
+        : isSuccess
+        ? "border-emerald-500/30 bg-emerald-500/10"
+        : isTip
+        ? "border-violet-500/30 bg-violet-500/10"
+        : "border-cyan-500/30 bg-cyan-500/10";
+      const iconColor = isWarn
+        ? "text-rose-300"
+        : isSuccess
+        ? "text-emerald-300"
+        : isTip
+        ? "text-violet-300"
+        : "text-cyan-300";
+
+      return (
+        <div key={index} className={`not-prose my-6 rounded-2xl border p-6 shadow-lg shadow-slate-950/20 ${borderClass}`}>
+          <div className="flex items-start gap-4">
+            {isWarn ? (
+              <AlertCircle className={`h-6 w-6 flex-shrink-0 mt-1 ${iconColor}`} />
+            ) : isTip ? (
+              <Lightbulb className={`h-6 w-6 flex-shrink-0 mt-1 ${iconColor}`} />
+            ) : isSuccess ? (
+              <CheckCircle2 className={`h-6 w-6 flex-shrink-0 mt-1 ${iconColor}`} />
+            ) : (
+              <Zap className={`h-6 w-6 flex-shrink-0 mt-1 ${iconColor}`} />
+            )}
+            <div>
+              <p className="font-semibold text-white">{block.title || "Note"}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{block.body || block.content}</p>
+            </div>
+          </div>
+        </div>
+      );
+
+    case "exercise":
+      return (
+        <div key={index} className="not-prose my-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 shadow-lg shadow-slate-950/20">
+          <div className="flex items-start gap-4">
+            <BookOpen className="h-6 w-6 flex-shrink-0 text-amber-300 mt-1" />
+            <div>
+              <p className="font-semibold text-white">{block.title || "Hands-on Exercise"}</p>
+              <div className="mt-2 text-sm leading-6 text-slate-300">
+                {(block.body || block.content || "").split("\n\n").map((step: string, sIdx: number) => (
+                  <p key={sIdx} className="mb-2">{step}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       );
 
     case "diagram":
       return (
         <div key={index} className="my-6">
           {block.title && <h3 className="mb-4 text-lg font-semibold text-white">{block.title}</h3>}
-          <InteractiveDiagram items={(block.data?.flow as string[]) || []} />
+          {block.data?.flow ? (
+            <InteractiveDiagram items={(block.data?.flow as string[]) || []} />
+          ) : block.caption || block.body ? (
+            <div className="p-4 rounded-xl border border-white/10 bg-slate-900/80 text-sm text-slate-300">
+              {block.body || block.caption}
+            </div>
+          ) : null}
         </div>
       );
 
@@ -58,7 +150,7 @@ function renderContentBlock(block: ContentBlock, index: number) {
             <Lightbulb className="h-6 w-6 flex-shrink-0 text-violet-300 mt-1" />
             <div>
               <p className="font-semibold text-white">{block.title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{block.content}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{block.content || block.body}</p>
             </div>
           </div>
         </div>
@@ -71,7 +163,7 @@ function renderContentBlock(block: ContentBlock, index: number) {
             <AlertCircle className="h-6 w-6 flex-shrink-0 text-rose-300 mt-1" />
             <div>
               <p className="font-semibold text-white">{block.title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{block.content}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{block.content || block.body}</p>
             </div>
           </div>
         </div>
@@ -85,7 +177,7 @@ function renderContentBlock(block: ContentBlock, index: number) {
             <div>
               <p className="font-semibold text-white mb-3">Key Points</p>
               <ul className="space-y-2">
-                {block.items?.map((item, i) => (
+                {block.items?.map((item: string, i: number) => (
                   <li key={i} className="text-sm leading-6 text-slate-300">
                     • {item}
                   </li>
@@ -103,7 +195,7 @@ function renderContentBlock(block: ContentBlock, index: number) {
             <Zap className="h-6 w-6 flex-shrink-0 text-emerald-300 mt-1" />
             <div>
               <p className="font-semibold text-white">{block.title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{block.content}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{block.content || block.body}</p>
             </div>
           </div>
         </div>
