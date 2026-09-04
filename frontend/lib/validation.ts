@@ -1,10 +1,11 @@
 import { z } from "zod";
-import mongoose from "mongoose";
+
+const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/;
 
 // ObjectId format validator helper
 export function isValidObjectId(id: string): boolean {
   if (!id || typeof id !== "string") return false;
-  return mongoose.Types.ObjectId.isValid(id) && String(new mongoose.Types.ObjectId(id)) === id;
+  return OBJECT_ID_REGEX.test(id);
 }
 
 // Sanitization helper for safe string parameters (prevents NoSQL object parameter injection)
