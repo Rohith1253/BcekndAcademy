@@ -55,7 +55,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             )}
 
             <a href="/" className="flex items-center gap-3 transition hover:opacity-90 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-fuchsia-500 text-slate-950 shadow-md shadow-cyan-500/20 group-hover:scale-105 transition-transform duration-200">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-800 text-slate-100 shadow-sm hover:bg-gray-700 transition-transform duration-200">
                 <Terminal className="h-5 w-5 stroke-[2.5]" />
               </div>
               <div className="flex flex-col">
@@ -110,7 +110,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 </a>
                 <a
                   href="/login?mode=register"
-                  className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 px-4 py-2 text-xs font-bold text-slate-950 shadow-md shadow-cyan-500/20 transition hover:opacity-95 hover:scale-[1.02] cursor-pointer"
+                  className="inline-flex items-center justify-center rounded-md bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400 transition cursor-pointer"
                 >
                   <span>Get Started</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-1.5" />

@@ -17,11 +17,11 @@ export default function WelcomeBanner() {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
-      className="rounded-[2rem] border border-white/10 bg-slate-900/70 p-8 shadow-2xl shadow-slate-950/30 backdrop-blur-xl"
+      className="rounded-lg border border-white/10 bg-slate-900/70 p-8 shadow-sm"
     >
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-3 rounded-full bg-violet-500/10 px-4 py-2 text-sm text-violet-200 ring-1 ring-violet-500/20">
+          <div className="inline-flex items-center gap-3 rounded-md bg-violet-500/10 px-4 py-2 text-sm text-violet-200 ring-1 ring-violet-500/20">
             <Sparkles className="h-4 w-4 text-violet-300" />
             Dashboard Overview
           </div>
@@ -37,7 +37,7 @@ export default function WelcomeBanner() {
         </div>
 
         <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:w-auto lg:grid-cols-2">
-          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/85 p-5 shadow-inner shadow-white/5">
+          <div className="rounded-md border border-white/10 bg-slate-950/85 p-5 shadow-inner shadow-white/5">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Current Level</p>
             <div className="mt-4 flex items-center gap-3 text-3xl font-semibold text-white">
               <Trophy className="h-7 w-7 text-amber-400" />
@@ -45,7 +45,7 @@ export default function WelcomeBanner() {
             </div>
           </div>
 
-          <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/85 p-5 shadow-inner shadow-white/5">
+          <div className="rounded-md border border-white/10 bg-slate-950/85 p-5 shadow-inner shadow-white/5">
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Daily Streak</p>
             <div className="mt-4 flex items-center gap-3 text-3xl font-semibold text-white">
               <Activity className="h-7 w-7 text-cyan-300" />
@@ -55,7 +55,7 @@ export default function WelcomeBanner() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-[1.75rem] border border-violet-500/10 bg-gradient-to-r from-violet-500/10 via-slate-900/60 to-cyan-500/10 p-6 shadow-[0_20px_80px_-48px_rgba(125,106,255,0.55)]">
+      <div className="mt-8 rounded-md border border-violet-500/20 bg-slate-800/60 p-6">
         <p className="text-sm uppercase tracking-[0.28em] text-violet-300/70">Motivational Quote</p>
         <p className="mt-4 text-xl font-semibold leading-9 text-slate-100">
           “Great backend systems are built one strong API at a time.”

@@ -25,7 +25,7 @@ export default function SolutionModal({ isOpen, solution, onClose }: SolutionMod
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[90vh] max-w-4xl w-full rounded-[2rem] border border-white/20 bg-slate-950 shadow-2xl"
+            className="max-h-[90vh] max-w-4xl w-full rounded-lg border border-white/20 bg-slate-950 shadow-xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 px-8 py-6">
@@ -49,7 +49,7 @@ export default function SolutionModal({ isOpen, solution, onClose }: SolutionMod
             <div className="border-t border-white/10 px-8 py-4 flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 rounded-[1.25rem] bg-white/10 py-3 font-semibold text-white transition hover:bg-white/20"
+                className="flex-1 rounded-md bg-white/10 py-3 font-semibold text-white transition hover:bg-white/20"
               >
                 Close
               </button>
@@ -58,7 +58,7 @@ export default function SolutionModal({ isOpen, solution, onClose }: SolutionMod
                   navigator.clipboard.writeText(solution);
                   onClose();
                 }}
-                className="flex-1 rounded-[1.25rem] bg-gradient-to-r from-violet-500 to-cyan-500 py-3 font-semibold text-slate-950 transition hover:opacity-90"
+                className="flex-1 rounded-md bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-500"
               >
                 Copy Solution
               </button>

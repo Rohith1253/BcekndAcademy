@@ -75,13 +75,13 @@ export default function ChallengePanel({
       <div className="mt-auto pt-6 space-y-3 border-t border-white/10">
         <button
           onClick={onRunCode}
-          className="w-full rounded-[1.25rem] bg-gradient-to-r from-violet-500 to-cyan-500 py-3 font-semibold text-slate-950 transition hover:opacity-90"
+          className="w-full rounded-md bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-500"
         >
           Run Code
         </button>
         <button
           onClick={onShowSolution}
-          className="w-full rounded-[1.25rem] border border-white/20 bg-white/5 py-3 font-semibold text-white transition hover:bg-white/10"
+          className="w-full rounded-md border border-white/20 bg-white/5 py-3 font-semibold text-white transition hover:bg-white/10"
         >
           Show Solution
         </button>

@@ -62,7 +62,7 @@ export default function Hero() {
           {/* Left Column: Headline & Action Controls */}
           <div className="flex flex-col items-start">
             {/* Top Pill Badge */}
-            <div className="hero-stagger inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 backdrop-blur-md mb-6">
+            <div className="hero-stagger inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 mb-6">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
               <span>Production-Grade Learning Platform</span>
             </div>
@@ -70,7 +70,7 @@ export default function Hero() {
             {/* Main Headline */}
             <h1 className="hero-stagger text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.15]">
               Master Backend Development{" "}
-              <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
+              <span className="text-cyan-300">
                 by Building Real Things.
               </span>
             </h1>
@@ -84,7 +84,7 @@ export default function Hero() {
             <div className="hero-stagger mt-8 flex flex-wrap items-center gap-4 w-full sm:w-auto">
               <a
                 href={user ? "/dashboard" : "/courses"}
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 py-3.5 px-7 text-sm font-bold text-slate-950 shadow-lg shadow-indigo-500/25 transition-all duration-300 hover:shadow-cyan-500/35 hover:scale-[1.02] cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-md bg-cyan-500 py-3.5 px-7 text-sm font-bold text-slate-950 shadow-md transition-all duration-300 hover:bg-cyan-400 hover:scale-[1.02] cursor-pointer"
               >
                 <span>{user ? "Go to Dashboard" : "Explore Courses"}</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -92,7 +92,7 @@ export default function Hero() {
 
               <a
                 href="/roadmap"
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.04] py-3.5 px-7 text-sm font-semibold text-slate-200 backdrop-blur-md transition-all duration-300 hover:bg-white/[0.08] hover:border-white/25 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-gray-600 bg-transparent py-3.5 px-7 text-sm font-semibold text-slate-300 hover:border-gray-400 hover:text-white transition-all duration-300 cursor-pointer"
               >
                 View Roadmap
               </a>

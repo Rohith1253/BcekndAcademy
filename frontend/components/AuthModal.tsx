@@ -70,7 +70,7 @@ export default function AuthModal({ isOpen, initialMode = "login", onClose }: Au
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
+          className="fixed inset-0 bg-slate-950/80"
         />
 
         {/* Modal Container */}
@@ -78,7 +78,7 @@ export default function AuthModal({ isOpen, initialMode = "login", onClose }: Au
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative my-auto w-full max-w-[440px] max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/[0.12] bg-slate-900/95 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl text-slate-100 z-[101]"
+          className="relative my-auto w-full max-w-[440px] max-h-[90vh] overflow-y-auto rounded-lg border border-white/[0.10] bg-slate-900 p-6 sm:p-8 shadow-xl text-slate-100 z-[101]"
         >
           {/* Close Button */}
           <button
@@ -95,7 +95,7 @@ export default function AuthModal({ isOpen, initialMode = "login", onClose }: Au
           ) : (
             <div>
               <div className="mb-5 sm:mb-6">
-                <div className="mb-3 inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-fuchsia-500 text-slate-950 shadow-lg">
+                <div className="mb-3 inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-md bg-cyan-500 text-slate-950 shadow-sm">
                   <UserPlus className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-white">Create Account</h2>
@@ -173,7 +173,7 @@ export default function AuthModal({ isOpen, initialMode = "login", onClose }: Au
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-6 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 py-3 sm:py-3.5 text-sm font-bold text-slate-950 shadow-xl transition hover:opacity-95 disabled:opacity-50 cursor-pointer"
+                  className="mt-6 flex w-full items-center justify-center rounded-md bg-cyan-500 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-cyan-400 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? "Creating Account..." : "Create Account"}
                 </button>

@@ -218,7 +218,7 @@ export default function CourseCatalogClient() {
             </div>
 
             {/* Filter Buttons Bar */}
-            <div className="rounded-2xl border border-white/[0.08] bg-slate-950/60 p-4 backdrop-blur-xl shadow-lg flex flex-col sm:flex-row gap-4 justify-between">
+            <div className="rounded-lg border border-white/[0.08] bg-slate-900/80 p-4 shadow-sm flex flex-col sm:flex-row gap-4 justify-between">
               {/* Category Filters */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 flex items-center gap-1 shrink-0">
@@ -272,7 +272,7 @@ export default function CourseCatalogClient() {
               <p className="text-xs font-mono tracking-wider">Loading courses...</p>
             </div>
           ) : filteredCourses.length === 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-12 text-center text-slate-400 backdrop-blur-xl space-y-4">
+            <div className="rounded-lg border border-white/10 bg-slate-900/80 p-12 text-center text-slate-400 space-y-4">
               <Code2 className="mx-auto h-10 w-10 text-slate-500" />
               <p className="text-lg font-bold text-white">No courses match your filter criteria</p>
               <p className="text-xs text-slate-400 max-w-md mx-auto">

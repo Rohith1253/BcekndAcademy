@@ -215,7 +215,7 @@ export default function LoginForm({
 
   const containerClasses =
     variant === "page"
-      ? `w-full max-w-[440px] rounded-[24px] sm:rounded-[28px] border border-white/[0.12] bg-white/[0.04] p-6 sm:p-8 backdrop-blur-xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] relative overflow-hidden text-slate-100 ${className}`
+      ? `w-full max-w-[440px] rounded-lg border border-white/[0.10] bg-slate-900 p-6 sm:p-8 shadow-xl relative overflow-hidden text-slate-100 ${className}`
       : `w-full text-slate-100 ${className}`;
 
   return (
@@ -225,7 +225,7 @@ export default function LoginForm({
       )}
 
       <div className="stagger-item flex items-center gap-3 mb-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-fuchsia-500 text-slate-950 shadow-md shadow-cyan-500/20">
+        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-500 text-slate-950 shadow-sm">
           <Terminal className="h-5 w-5 stroke-[2.5]" />
         </div>
         <div>
@@ -338,21 +338,19 @@ export default function LoginForm({
             ref={submitButtonRef}
             type="submit"
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 p-px font-semibold shadow-lg shadow-indigo-500/25 transition-all duration-300 hover:shadow-cyan-500/35 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+            className="w-full rounded-md bg-cyan-500 py-3.5 px-6 text-sm text-slate-950 font-bold flex items-center justify-center gap-2 shadow-md transition-all duration-300 hover:bg-cyan-400 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
           >
-            <div className="w-full h-full rounded-[11px] bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 py-3.5 px-6 text-sm text-slate-950 font-bold flex items-center justify-center gap-2 transition-all duration-300">
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                  <span>{mode === "login" ? "Signing in..." : "Creating Account..."}</span>
-                </>
-              ) : (
-                <>
-                  <span>{mode === "login" ? "Sign in" : "Create Account"}</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </>
-              )}
-            </div>
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                <span>{mode === "login" ? "Signing in..." : "Creating Account..."}</span>
+              </>
+            ) : (
+              <>
+                <span>{mode === "login" ? "Sign in" : "Create Account"}</span>
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </>
+            )}
           </button>
         </div>
 

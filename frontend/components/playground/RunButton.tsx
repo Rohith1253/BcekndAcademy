@@ -22,7 +22,7 @@ export default function RunButton({
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       disabled={isLoading || isRunning}
-      className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-6 py-3 font-semibold text-slate-950 shadow-xl shadow-violet-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-3 rounded-md bg-violet-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <motion.div
         animate={isRunning ? { rotate: 360 } : {}}

@@ -41,12 +41,7 @@ export default function ContinueLearningCard({
   const remainingHours = Math.max(1, Math.round(totalHours * (1 - activeProgress / 100)));
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-cyan-500/30 bg-gradient-to-r from-slate-950 via-slate-900/90 to-slate-950 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl shadow-cyan-950/20">
-      {/* Decorative ambient gradients */}
-      <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-1/3 h-52 w-52 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent pointer-events-none" />
-
+    <section className="relative overflow-hidden rounded-lg border border-cyan-500/30 bg-slate-900 p-6 sm:p-8 shadow-sm">
       <div className="relative z-10 grid gap-6 lg:grid-cols-12 items-center">
         {/* Left/Main Column: Status badge, Title, Progress & Details */}
         <div className="lg:col-span-8 space-y-4">
@@ -130,7 +125,7 @@ export default function ContinueLearningCard({
 
           <Link
             href={`/courses/${targetCourse.slug}`}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 py-3.5 px-7 text-xs sm:text-sm font-bold text-slate-950 shadow-xl shadow-cyan-500/20 transition-all duration-300 hover:shadow-cyan-500/35 hover:scale-[1.02] cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-cyan-500 py-3.5 px-7 text-xs sm:text-sm font-bold text-slate-950 shadow-md transition-all duration-300 hover:bg-cyan-400 hover:scale-[1.02] cursor-pointer"
           >
             <span>{isInProgress ? "Continue Learning" : "Start Learning"}</span>
             <ArrowRight className="w-4 h-4" />

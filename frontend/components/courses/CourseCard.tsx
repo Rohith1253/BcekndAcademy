@@ -52,7 +52,7 @@ export default function CourseCard({
 
   return (
     <div
-      className={`course-card group relative flex flex-col justify-between rounded-[24px] border border-white/[0.1] bg-gradient-to-b ${theme.cardBgGradient} p-6 sm:p-7 backdrop-blur-xl shadow-xl transition-all duration-300 ease-out hover:-translate-y-1.5 ${theme.cardBorderHover}`}
+      className={`course-card group relative flex flex-col justify-between rounded-md border border-gray-600 bg-gray-900 p-6 sm:p-7 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 ${theme.cardBorderHover}`}
     >
       {/* Learning Path Step & Start Here Indicator */}
       {pathStep && (

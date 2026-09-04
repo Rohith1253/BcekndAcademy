@@ -407,7 +407,7 @@ export default function AIAssistant({
           </div>
           <div>
             <h4 className="text-xs font-bold text-white leading-none">AI Mentor</h4>
-            <span className="text-[10px] font-mono text-slate-400">Gemini · Backend Lab</span>
+            <span className="text-[10px] font-mono text-slate-400">AI · Backend Lab</span>
           </div>
         </div>
 

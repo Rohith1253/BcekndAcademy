@@ -18,7 +18,7 @@ export default function LessonGameBanner({ lessonSlug }: LessonGameBannerProps) 
   if (!game) return null;
 
   return (
-    <div className="rounded-[24px] border border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 via-slate-900/80 to-indigo-950/20 p-6 shadow-xl backdrop-blur-xl space-y-4">
+    <div className="rounded-lg border border-cyan-500/30 bg-slate-800/80 p-6 shadow-sm space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-400">
@@ -34,14 +34,14 @@ export default function LessonGameBanner({ lessonSlug }: LessonGameBannerProps) 
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-fuchsia-300 bg-fuchsia-500/10 border border-fuchsia-500/30 px-3 py-1.5 rounded-xl">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-fuchsia-300 bg-fuchsia-500/10 border border-fuchsia-500/30 px-3 py-1.5 rounded-md">
             <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
             <span>+{game.xpReward} XP</span>
           </div>
 
           <a
             href={`/games/${game.id}`}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-md shadow-indigo-500/20 transition hover:scale-[1.02] cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-cyan-500 px-5 py-2.5 text-xs font-bold text-slate-950 shadow-sm transition hover:bg-cyan-400 hover:scale-[1.02] cursor-pointer"
           >
             <span>Play Game</span>
             <ArrowRight className="w-4 h-4" />

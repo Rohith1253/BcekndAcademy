@@ -56,13 +56,9 @@ export default function RecommendedLearningPath({
   return (
     <section
       aria-labelledby="learning-path-heading"
-      className="relative rounded-[2.5rem] border border-cyan-500/20 bg-gradient-to-b from-slate-950 via-[#0a0f24] to-slate-950 p-6 sm:p-10 lg:p-12 shadow-2xl shadow-cyan-950/20 backdrop-blur-2xl overflow-hidden"
+      className="relative rounded-md border border-gray-600 bg-gray-900 p-6 sm:p-10 lg:p-12 shadow-sm overflow-hidden"
     >
-      {/* Decorative ambient background glows */}
-      <div className="absolute top-0 right-1/3 -mt-24 h-96 w-96 rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-10 left-1/4 -mb-24 h-96 w-96 rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent pointer-events-none" />
-
+      
       <div className="relative z-10 space-y-10">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">

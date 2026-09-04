@@ -136,11 +136,11 @@ export default function Features() {
     <section ref={sectionRef} className="relative pb-24 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-28">
         {/* ================= VERIFIED STATS BAR ================= */}
-        <div className="rounded-[24px] sm:rounded-[28px] border border-white/[0.12] bg-white/[0.04] p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
+        <div className="rounded-lg border border-white/[0.10] bg-gray-800/40 p-6 sm:p-8 shadow-sm">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
             {realStats.map((stat, idx) => (
               <div key={idx} className="space-y-1.5 p-3">
-                <p className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
+                <p className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-cyan-400">
                   {stat.value}
                 </p>
                 <p className="text-sm font-bold text-white tracking-wide">{stat.label}</p>
@@ -170,15 +170,15 @@ export default function Features() {
               return (
                 <div
                   key={idx}
-                  className="feature-card rounded-[24px] border border-white/[0.12] bg-white/[0.04] p-6 sm:p-8 backdrop-blur-xl shadow-xl transition-all duration-300 hover:border-cyan-400/40 hover:bg-white/[0.06] group"
+                  className="feature-card rounded-lg border border-white/[0.10] bg-gray-800/30 p-6 sm:p-8 shadow-sm transition-all duration-300 hover:border-cyan-400/40 hover:bg-gray-800/50 group"
                 >
                   <div className="flex items-center justify-between mb-5">
                     <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${feat.color} text-slate-950 shadow-md`}
+                      className={`flex h-11 w-11 items-center justify-center rounded-md bg-gradient-to-br ${feat.color} text-slate-950 shadow-sm`}
                     >
-                      <Icon className="h-6 w-6 stroke-[2.5]" />
+                      <Icon className="h-5 w-5 stroke-[2.5]" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-950/60 px-3 py-1 rounded-full border border-white/[0.06]">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-950/60 px-3 py-1 rounded-md border border-white/[0.06]">
                       {feat.tag}
                     </span>
                   </div>
@@ -195,7 +195,7 @@ export default function Features() {
         </div>
 
         {/* ================= LEARNING JOURNEY FLOW ================= */}
-        <div className="rounded-[28px] border border-white/[0.12] bg-slate-950/80 p-8 sm:p-12 backdrop-blur-xl relative overflow-hidden">
+        <div className="rounded-lg border border-white/[0.10] bg-slate-950/80 p-8 sm:p-12 relative overflow-hidden">
           <div className="text-center max-w-xl mx-auto mb-12">
             <span className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-400">
               Methodology
@@ -249,10 +249,10 @@ export default function Features() {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {featuredCourses.map((course) => (
-              <a
+                <a
                 key={course.slug}
                 href={`/courses/${course.slug}`}
-                className="group rounded-[24px] border border-white/[0.12] bg-white/[0.04] p-6 backdrop-blur-xl shadow-xl flex flex-col justify-between transition-all duration-300 hover:border-cyan-400/50 hover:bg-white/[0.07] hover:scale-[1.01]"
+                className="group rounded-lg border border-white/[0.10] bg-gray-800/30 p-6 flex flex-col justify-between transition-all duration-300 hover:border-cyan-400/50 hover:bg-gray-800/50 hover:scale-[1.01]"
               >
                 <div>
                   <div className="flex items-center justify-between text-xs mb-4">
@@ -279,11 +279,9 @@ export default function Features() {
         </div>
 
         {/* ================= FINAL CALL TO ACTION (CTA) BANNER ================= */}
-        <div className="rounded-[28px] border border-white/[0.15] bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-8 sm:p-12 text-center backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
-
+        <div className="rounded-lg border border-white/[0.12] bg-slate-900 p-8 sm:p-12 text-center relative overflow-hidden">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-3.5 py-1 rounded-full border border-cyan-500/20">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-3.5 py-1 rounded-md border border-cyan-500/20">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Start Learning Today</span>
             </div>
@@ -296,7 +294,7 @@ export default function Features() {
             <div className="pt-4 flex justify-center">
               <a
                 href={user ? "/dashboard" : "/courses"}
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 py-3.5 px-8 text-sm font-bold text-slate-950 shadow-lg shadow-indigo-500/25 transition-all duration-300 hover:shadow-cyan-500/35 hover:scale-[1.02] cursor-pointer"
+                className="inline-flex items-center justify-center rounded-md bg-cyan-500 py-3.5 px-8 text-sm font-bold text-slate-950 shadow-md transition-all duration-300 hover:bg-cyan-400 hover:scale-[1.02] cursor-pointer"
               >
                 <span>{user ? "Go to Dashboard" : "Start Learning Now"}</span>
                 <ArrowRight className="w-4 h-4 ml-2" />

@@ -65,9 +65,10 @@ export default function BookmarkButton({ lessonId }: BookmarkButtonProps) {
   return (
     <button
       onClick={toggleBookmark}
-      className={`inline-flex items-center justify-center rounded-3xl px-4 py-2.5 text-sm font-semibold transition ${
+      aria-label={bookmarked ? "Remove bookmark" : "Bookmark lesson"}
+      className={`inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition min-h-[44px] ${
         bookmarked
-          ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg shadow-rose-500/20"
+          ? "bg-rose-500 text-white shadow-sm hover:bg-rose-600"
           : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
       }`}
     >
