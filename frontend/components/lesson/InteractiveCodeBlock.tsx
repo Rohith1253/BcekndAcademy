@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Copy, Check, Play, RotateCcw, Terminal, ShieldCheck, Sparkles, Clock, AlertCircle } from "lucide-react";
+import { Copy, Check, Play, RotateCcw, Terminal, ShieldCheck, Sparkles, Clock, AlertCircle, ExternalLink } from "lucide-react";
 import { api } from "@/lib/api";
 
 interface InteractiveCodeBlockProps {
@@ -39,6 +39,12 @@ export default function InteractiveCodeBlock({
     setOutputLines([]);
     setErrorLines([]);
     setExecutionStats(null);
+  };
+
+  const handleOpenPlayground = () => {
+    const langSlug = language.toLowerCase();
+    const encoded = encodeURIComponent(code);
+    window.open(`/playground/${langSlug}?code=${encoded}`, "_blank");
   };
 
   const handleRun = async () => {
@@ -103,7 +109,7 @@ export default function InteractiveCodeBlock({
           <button
             onClick={handleReset}
             title="Reset to starter code"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition cursor-pointer"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Reset</span>
@@ -112,16 +118,25 @@ export default function InteractiveCodeBlock({
           <button
             onClick={handleCopy}
             title="Copy code"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition cursor-pointer"
           >
             {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
             <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
           </button>
 
           <button
+            onClick={handleOpenPlayground}
+            title="Open in full playground workspace"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 transition cursor-pointer"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">Playground</span>
+          </button>
+
+          <button
             onClick={handleRun}
             disabled={isRunning}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-bold transition shadow-md ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-bold transition shadow-md cursor-pointer ${
               isRunning
                 ? "bg-cyan-600/40 text-slate-300 cursor-not-allowed"
                 : "bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-500/20 active:scale-95"

@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Clock, Layers, Sparkles, ArrowRight, CheckCircle2, Trophy, Play } from "lucide-react";
+import { 
+  BookOpen, Clock, Layers, Sparkles, ArrowRight, CheckCircle2, 
+  Trophy, Play, Lock, Eye
+} from "lucide-react";
 import { useClient } from "@/lib/store";
 import { getApiUrl } from "@/lib/http";
 import { getLearningPathStep } from "@/lib/learningPath";
@@ -16,6 +19,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
   const pathStep = getLearningPathStep(slug);
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
+  const [curriculumData, setCurriculumData] = useState<any>(null);
   const [progressData, setProgressData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,15 +36,26 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
           setError(json.error || "Course not found");
         }
 
+        // Fetch curriculum with lock statuses
+        try {
+          const currRes = await fetch(getApiUrl(`/api/courses/${slug}/curriculum`), { credentials: "include" });
+          const currJson = await currRes.json();
+          if (currJson.success && currJson.data) {
+            setCurriculumData(currJson.data);
+            if (currJson.data.modules) {
+              setModules(currJson.data.modules);
+            }
+          }
+        } catch (cErr) {
+          console.warn("Curriculum fetch error:", cErr);
+        }
+
         // Fetch user-specific progress if logged in
         if (user) {
           const progRes = await fetch(getApiUrl(`/api/courses/${slug}/progress`), { credentials: "include" });
           const progJson = await progRes.json();
           if (progJson.success && progJson.data) {
             setProgressData(progJson.data);
-            if (progJson.data.modules) {
-              setModules(progJson.data.modules);
-            }
           }
         }
       } catch (e) {
@@ -80,10 +95,10 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
     );
   }
 
-  const completedCount = progressData?.completedLessons ?? 0;
-  const totalCount = progressData?.totalLessons ?? course.totalLessons ?? 12;
-  const progressPercent = progressData?.progressPercentage ?? 0;
-  const nextLessonSlug = progressData?.currentLesson?.slug || "http-basics";
+  const completedCount = curriculumData?.stats?.completedLessons ?? progressData?.completedLessons ?? 0;
+  const totalCount = curriculumData?.stats?.totalLessons ?? progressData?.totalLessons ?? course.totalLessons ?? 12;
+  const progressPercent = curriculumData?.stats?.progressPercentage ?? progressData?.progressPercentage ?? 0;
+  const resumeLessonSlug = curriculumData?.resumeLesson?.slug || progressData?.currentLesson?.slug || modules[0]?.lessons?.[0]?.slug || "http-basics";
 
   return (
     <div className="min-h-screen bg-slate-950 px-6 py-12 lg:px-12">
@@ -111,7 +126,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
             <span className="rounded-full bg-sky-500/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">
               {course.difficulty}
             </span>
-            {progressData?.completed && (
+            {(progressData?.completed || curriculumData?.stats?.progressPercentage === 100) && (
               <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
                 <Trophy className="h-3.5 w-3.5" /> Course Complete!
               </span>
@@ -145,12 +160,12 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
 
               <div className="mt-6 flex flex-wrap gap-4 items-center justify-between pt-4 border-t border-white/10">
                 <span className="text-sm text-slate-300">
-                  {progressData?.completed
+                  {progressData?.completed || curriculumData?.stats?.progressPercentage === 100
                     ? "🎉 Congratulations! You have completed all course requirements."
-                    : `Next Up: ${progressData?.currentLesson?.title || "HTTP Basics"}`}
+                    : `Next Up: ${curriculumData?.resumeLesson?.title || progressData?.currentLesson?.title || "Get Started"}`}
                 </span>
                 <a
-                  href={`/learn/${nextLessonSlug}`}
+                  href={`/courses/${slug}/lessons/${resumeLessonSlug}`}
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-sky-500 px-6 py-2.5 text-sm font-semibold text-slate-950 shadow-lg transition hover:opacity-95"
                 >
                   <Play className="h-4 w-4 fill-current" />
@@ -182,7 +197,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
                 <BookOpen className="h-5 w-5 text-cyan-300" />
                 <span className="text-xs uppercase tracking-wider font-medium">Lessons</span>
               </div>
-              <p className="mt-2 text-2xl font-semibold text-white">{course.totalLessons} Lessons</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{totalCount} Lessons</p>
             </div>
 
             <div className="rounded-[1.75rem] bg-slate-900/90 p-5">
@@ -362,13 +377,13 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
 
           <div className="space-y-6">
             {modules.map((mod: any, index: number) => {
-              const modCompleted = mod.completedLessons || 0;
+              const modCompleted = mod.completedLessons || mod.lessons?.filter((l: any) => l.isCompleted || l.completed)?.length || 0;
               const modTotal = mod.totalLessons || mod.lessons?.length || 3;
               const modPercent = mod.progressPercentage || Math.round((modCompleted / modTotal) * 100) || 0;
 
               return (
                 <motion.div
-                  key={mod._id || mod.slug}
+                  key={mod._id || mod.slug || index}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
@@ -377,7 +392,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                       <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 text-sm font-semibold text-slate-950">
-                        {mod.order}
+                        {mod.order || index + 1}
                       </span>
                       <div>
                         <h3 className="text-2xl font-semibold text-white">{mod.title}</h3>
@@ -399,37 +414,54 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
                   <div className="mt-6 space-y-3 pt-4 border-t border-white/10">
                     {mod.lessons && mod.lessons.length > 0 ? (
                       mod.lessons.map((les: any) => {
-                        const isDone = les.completed || les.status === "completed";
-                        const isCurrent = progressData?.currentLesson?.slug === les.slug;
+                        const isDone = les.isCompleted || les.completed || les.status === "completed";
+                        const isCurrent = curriculumData?.resumeLesson?.slug === les.slug || progressData?.currentLesson?.slug === les.slug;
+                        const isLocked = les.isLocked;
+                        const isPreview = les.isPreview;
+
+                        const targetHref = isLocked 
+                          ? undefined 
+                          : `/courses/${slug}/lessons/${les.slug}`;
 
                         return (
                           <a
                             key={les._id || les.slug}
-                            href={`/learn/${les.slug}`}
+                            href={targetHref}
                             className={`group flex items-center justify-between rounded-2xl border p-4 transition ${
                               isDone
                                 ? "border-emerald-500/30 bg-emerald-500/10 hover:border-emerald-500/50"
                                 : isCurrent
                                 ? "border-violet-500/50 bg-violet-500/10 hover:border-violet-500/80"
+                                : isLocked
+                                ? "border-white/5 bg-slate-950/40 opacity-60 cursor-not-allowed"
                                 : "border-white/5 bg-slate-900/60 hover:border-violet-500/40 hover:bg-slate-900/90"
                             }`}
                           >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 truncate">
                               {isDone ? (
                                 <CheckCircle2 className="h-5 w-5 text-emerald-300 flex-shrink-0" />
+                              ) : isLocked ? (
+                                <Lock className="h-5 w-5 text-slate-500 flex-shrink-0" />
                               ) : (
                                 <span className={`h-2 w-2 rounded-full ${isCurrent ? "bg-violet-400 animate-pulse" : "bg-slate-600"}`} />
                               )}
-                              <span className={`font-medium ${isDone ? "text-emerald-200" : isCurrent ? "text-violet-200 font-semibold" : "text-slate-200 group-hover:text-white"}`}>
+                              <span className={`font-medium truncate ${isDone ? "text-emerald-200" : isCurrent ? "text-violet-200 font-semibold" : isLocked ? "text-slate-400" : "text-slate-200 group-hover:text-white"}`}>
                                 {les.title}
                               </span>
-                              <span className="text-xs text-slate-400">({les.estimatedMinutes || les.duration || 15} mins)</span>
+                              <span className="text-xs text-slate-400 shrink-0">({les.estimatedMinutes || les.duration || 15} mins)</span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs text-slate-400">
+                            <div className="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+                              {isPreview && !isDone && (
+                                <span className="rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 px-2.5 py-0.5 font-semibold text-[10px] uppercase tracking-wider flex items-center gap-1">
+                                  <Eye className="h-3 w-3" /> Preview
+                                </span>
+                              )}
                               <span className="rounded-full bg-violet-500/10 px-3 py-1 text-violet-300 font-medium">+{les.xpReward || 100} XP</span>
                               {isDone ? (
                                 <span className="font-semibold text-emerald-300 flex items-center gap-1">Completed</span>
+                              ) : isLocked ? (
+                                <span className="font-semibold text-slate-500 flex items-center gap-1">Locked</span>
                               ) : (
                                 <span className="font-semibold text-violet-300 group-hover:translate-x-1 transition flex items-center gap-1">
                                   {isCurrent ? "Continue" : "Start"} <ArrowRight className="h-3 w-3" />

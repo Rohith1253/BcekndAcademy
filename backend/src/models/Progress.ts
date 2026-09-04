@@ -7,6 +7,15 @@ export interface IProgress extends Document {
   moduleId?: string;
   status: "not-started" | "in-progress" | "completed";
   progressPercentage: number;
+  scrollPosition?: number;
+  readingProgress?: number;
+  exerciseProgress?: Record<string, boolean>;
+  quizScore?: number;
+  completionRequirements?: {
+    reading?: boolean;
+    exercise?: boolean;
+    quiz?: boolean;
+  };
   timeSpent: number;
   startedAt: Date;
   lastAccessedAt: Date;
@@ -45,6 +54,30 @@ const progressSchema = new Schema<IProgress>(
       default: 0,
       min: 0,
       max: 100,
+    },
+    scrollPosition: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    readingProgress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    exerciseProgress: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
+    quizScore: {
+      type: Number,
+      default: 0,
+    },
+    completionRequirements: {
+      type: Schema.Types.Mixed,
+      default: { reading: true, exercise: false, quiz: false },
     },
     timeSpent: {
       type: Number,

@@ -81,6 +81,128 @@ export function getLessonsForCourse(courseSlug: string): any[] {
 
 export class ProgressService {
   /**
+   * Validates if a user is permitted to access/complete a lesson based on prerequisite progression.
+   */
+  static async checkLessonLock(params: {
+    userId?: string | mongoose.Types.ObjectId;
+    courseSlug: string;
+    lessonSlug: string;
+  }): Promise<{ isLocked: boolean; reason?: string; requiredLessonSlug?: string }> {
+    const { userId, courseSlug, lessonSlug } = params;
+    const courseLessons = getLessonsForCourse(courseSlug);
+    if (courseLessons.length === 0) {
+      return { isLocked: false };
+    }
+
+    const targetIndex = courseLessons.findIndex((l) => l.slug === lessonSlug);
+    if (targetIndex === -1) {
+      return { isLocked: false };
+    }
+
+    const targetLesson = courseLessons[targetIndex];
+    // First lesson in course or preview-flagged lessons are always unlocked
+    if (targetIndex === 0 || targetLesson.isPreview) {
+      return { isLocked: false };
+    }
+
+    // Subsequent non-preview lessons require login & previous lesson completion
+    if (!userId) {
+      const prevLesson = courseLessons[targetIndex - 1];
+      return {
+        isLocked: true,
+        reason: "Complete the previous lesson first",
+        requiredLessonSlug: prevLesson.slug,
+      };
+    }
+
+    const userObjId = new mongoose.Types.ObjectId(String(userId));
+    const previousLesson = courseLessons[targetIndex - 1];
+
+    const prevProgress = await Progress.findOne({
+      userId: userObjId,
+      lessonId: previousLesson.slug,
+      status: "completed",
+    });
+
+    if (!prevProgress) {
+      return {
+        isLocked: true,
+        reason: "Complete the previous lesson first",
+        requiredLessonSlug: previousLesson.slug,
+      };
+    }
+
+    return { isLocked: false };
+  }
+
+  /**
+   * Updates in-progress lesson state with debounced scroll/reading progress.
+   */
+  static async updateLessonProgress(params: {
+    userId: string | mongoose.Types.ObjectId;
+    lessonId: string;
+    courseId?: string;
+    moduleId?: string;
+    scrollPosition?: number;
+    readingProgress?: number;
+    progressPercentage?: number;
+    exerciseProgress?: Record<string, boolean>;
+    quizScore?: number;
+    timeSpent?: number;
+  }) {
+    const {
+      userId,
+      lessonId,
+      courseId,
+      moduleId,
+      scrollPosition,
+      readingProgress,
+      progressPercentage,
+      exerciseProgress,
+      quizScore,
+      timeSpent = 0,
+    } = params;
+
+    const userObjId = new mongoose.Types.ObjectId(String(userId));
+    let progress = await Progress.findOne({ userId: userObjId, lessonId });
+
+    if (!progress) {
+      progress = new Progress({
+        userId: userObjId,
+        lessonId,
+        courseId,
+        moduleId,
+        status: "in-progress",
+        scrollPosition: scrollPosition ?? 0,
+        readingProgress: readingProgress ?? 0,
+        progressPercentage: progressPercentage ?? 0,
+        exerciseProgress: exerciseProgress ?? {},
+        quizScore: quizScore ?? 0,
+        timeSpent,
+        startedAt: new Date(),
+        lastAccessedAt: new Date(),
+      });
+    } else {
+      if (progress.status === "not-started") {
+        progress.status = "in-progress";
+      }
+      if (scrollPosition !== undefined) progress.scrollPosition = Math.max(progress.scrollPosition || 0, scrollPosition);
+      if (readingProgress !== undefined) progress.readingProgress = Math.max(progress.readingProgress || 0, readingProgress);
+      if (progressPercentage !== undefined) progress.progressPercentage = Math.max(progress.progressPercentage || 0, progressPercentage);
+      if (exerciseProgress) {
+        progress.exerciseProgress = { ...(progress.exerciseProgress || {}), ...exerciseProgress };
+        progress.markModified("exerciseProgress");
+      }
+      if (quizScore !== undefined) progress.quizScore = Math.max(progress.quizScore || 0, quizScore);
+      progress.timeSpent += timeSpent;
+      progress.lastAccessedAt = new Date();
+    }
+
+    await progress.save();
+    return progress;
+  }
+
+  /**
    * Records lesson completion with idempotent XP award and streak evaluation.
    */
   static async completeLesson(params: {
@@ -90,7 +212,12 @@ export class ProgressService {
     moduleId?: string;
     status?: "not-started" | "in-progress" | "completed";
     progressPercentage?: number;
+    scrollPosition?: number;
+    readingProgress?: number;
+    exerciseProgress?: Record<string, boolean>;
+    quizScore?: number;
     timeSpent?: number;
+    validateLock?: boolean;
   }) {
     const {
       userId,
@@ -99,10 +226,33 @@ export class ProgressService {
       moduleId,
       status = "completed",
       progressPercentage = 100,
+      scrollPosition = 100,
+      readingProgress = 100,
+      exerciseProgress,
+      quizScore,
       timeSpent = 0,
+      validateLock = false,
     } = params;
 
     const userObjId = new mongoose.Types.ObjectId(String(userId));
+
+    // Resolve lesson & parent course
+    const multiLesson = MULTI_LANGUAGE_LESSONS.find((l) => l.slug === lessonId);
+    const legacyLesson = ALL_REAL_LESSONS.find((l) => l.slug === lessonId);
+    const resolvedCourseSlug =
+      courseId || multiLesson?.courseSlug || (legacyLesson as any)?.courseSlug || "backend-node-js";
+
+    // Validate Lock if requested
+    if (validateLock) {
+      const lockStatus = await ProgressService.checkLessonLock({
+        userId: userObjId,
+        courseSlug: resolvedCourseSlug,
+        lessonSlug: lessonId,
+      });
+      if (lockStatus.isLocked) {
+        throw new Error(`Lesson is locked: ${lockStatus.reason}`);
+      }
+    }
 
     // 1. Find or create progress record
     let progress = await Progress.findOne({ userId: userObjId, lessonId });
@@ -113,10 +263,14 @@ export class ProgressService {
       progress = new Progress({
         userId: userObjId,
         lessonId,
-        courseId,
+        courseId: resolvedCourseSlug,
         moduleId,
         status,
         progressPercentage,
+        scrollPosition,
+        readingProgress,
+        exerciseProgress: exerciseProgress || {},
+        quizScore: quizScore || 0,
         timeSpent,
         startedAt: new Date(),
         lastAccessedAt: new Date(),
@@ -125,6 +279,15 @@ export class ProgressService {
     } else {
       progress.status = status;
       progress.progressPercentage = Math.max(progress.progressPercentage, progressPercentage);
+      progress.scrollPosition = Math.max(progress.scrollPosition || 0, scrollPosition);
+      progress.readingProgress = Math.max(progress.readingProgress || 0, readingProgress);
+      if (exerciseProgress) {
+        progress.exerciseProgress = { ...(progress.exerciseProgress || {}), ...exerciseProgress };
+        progress.markModified("exerciseProgress");
+      }
+      if (quizScore !== undefined) {
+        progress.quizScore = Math.max(progress.quizScore || 0, quizScore);
+      }
       progress.timeSpent += timeSpent;
       progress.lastAccessedAt = new Date();
       if (status === "completed" && !progress.completedAt) {
@@ -132,12 +295,6 @@ export class ProgressService {
       }
     }
     await progress.save();
-
-    // 2. Resolve lesson & parent course
-    const multiLesson = MULTI_LANGUAGE_LESSONS.find((l) => l.slug === lessonId);
-    const legacyLesson = ALL_REAL_LESSONS.find((l) => l.slug === lessonId);
-    const resolvedCourseSlug =
-      courseId || multiLesson?.courseSlug || (legacyLesson as any)?.courseSlug || "backend-node-js";
 
     // 3. Award XP if first completion
     let xpAwarded = 0;
@@ -641,6 +798,193 @@ export class ProgressService {
         xpReward: challenge.xpReward,
         isSolved: solvedChallengeSlugs.includes(challenge.slug),
       } : null,
+    };
+  }
+
+  /**
+   * Returns rich course curriculum with module hierarchy, lock status, and preview badges.
+   */
+  static async getCourseCurriculum(params: {
+    userId?: string | mongoose.Types.ObjectId;
+    courseSlug: string;
+  }) {
+    const { userId, courseSlug } = params;
+    const course = ALL_COURSES.find((c) => c.slug === courseSlug);
+    const courseLessons = getLessonsForCourse(courseSlug);
+
+    let progressRecords: any[] = [];
+    if (userId) {
+      const userObjId = new mongoose.Types.ObjectId(String(userId));
+      progressRecords = await Progress.find({
+        userId: userObjId,
+        lessonId: { $in: courseLessons.map((l) => l.slug) },
+      }).lean();
+    }
+
+    const progressMap = new Map<string, any>(progressRecords.map((p) => [p.lessonId, p]));
+    const completedSet = new Set(
+      progressRecords.filter((p) => p.status === "completed").map((p) => p.lessonId)
+    );
+
+    // Group lessons by module
+    const modulesMap = new Map<string, any>();
+    courseLessons.forEach((lesson, index) => {
+      const modSlug = lesson.moduleSlug || `mod-${Math.ceil((lesson.order || index + 1) / 3)}`;
+      const modTitle = lesson.moduleName || `Module ${Math.ceil((lesson.order || index + 1) / 3)}`;
+
+      if (!modulesMap.has(modSlug)) {
+        modulesMap.set(modSlug, {
+          slug: modSlug,
+          title: modTitle,
+          lessons: [],
+        });
+      }
+
+      const p = progressMap.get(lesson.slug);
+      const isCompleted = completedSet.has(lesson.slug);
+      const isPreview = !!lesson.isPreview;
+
+      // Lock status calculation: index 0 and preview lessons are unlocked.
+      // Subsequent lessons require previous lesson in course to be completed.
+      let isLocked = false;
+      if (index > 0 && !isPreview) {
+        const prevLesson = courseLessons[index - 1];
+        isLocked = !completedSet.has(prevLesson.slug);
+      }
+
+      modulesMap.get(modSlug).lessons.push({
+        slug: lesson.slug,
+        title: lesson.title,
+        description: lesson.description,
+        order: lesson.order || index + 1,
+        duration: lesson.duration || 15,
+        xpReward: lesson.xpReward || 100,
+        difficulty: lesson.difficulty || "beginner",
+        isCompleted,
+        isLocked,
+        isPreview,
+        scrollPosition: p?.scrollPosition || 0,
+        readingProgress: p?.readingProgress || 0,
+        progressPercentage: p?.progressPercentage || (isCompleted ? 100 : 0),
+        quizScore: p?.quizScore || 0,
+      });
+    });
+
+    const modules = Array.from(modulesMap.values()).map((mod, mIdx) => {
+      const totalInMod = mod.lessons.length;
+      const completedInMod = mod.lessons.filter((l: any) => l.isCompleted).length;
+      const isModuleComplete = totalInMod > 0 && completedInMod === totalInMod;
+      const isQuizUnlocked = isModuleComplete || completedInMod >= Math.max(1, totalInMod - 1);
+
+      return {
+        ...mod,
+        order: mIdx + 1,
+        totalLessons: totalInMod,
+        completedLessons: completedInMod,
+        isModuleComplete,
+        isQuizUnlocked,
+      };
+    });
+
+    const totalLessons = courseLessons.length;
+    const completedLessons = courseLessons.filter((l) => completedSet.has(l.slug)).length;
+    const progressPercentage = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    const isCourseCompleted = totalLessons > 0 && completedLessons === totalLessons;
+
+    // Find resume lesson
+    let resumeLesson = null;
+    const inProg = courseLessons.find((l) => progressMap.get(l.slug)?.status === "in-progress");
+    if (inProg) {
+      resumeLesson = { slug: inProg.slug, title: inProg.title, url: `/courses/${courseSlug}/lessons/${inProg.slug}` };
+    } else {
+      const nextUncompleted = courseLessons.find((l) => !completedSet.has(l.slug));
+      if (nextUncompleted) {
+        resumeLesson = { slug: nextUncompleted.slug, title: nextUncompleted.title, url: `/courses/${courseSlug}/lessons/${nextUncompleted.slug}` };
+      } else if (courseLessons.length > 0) {
+        resumeLesson = { slug: courseLessons[0].slug, title: courseLessons[0].title, url: `/courses/${courseSlug}/lessons/${courseLessons[0].slug}` };
+      }
+    }
+
+    return {
+      course: course || {
+        slug: courseSlug,
+        title: courseSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        language: "backend",
+        difficulty: "beginner",
+        estimatedHours: 10,
+      },
+      modules,
+      totalLessons,
+      completedLessons,
+      progressPercentage,
+      isCourseCompleted,
+      resumeLesson,
+    };
+  }
+
+  /**
+   * Resolves the exact resume lesson for a course.
+   */
+  static async getCourseResume(params: {
+    userId?: string | mongoose.Types.ObjectId;
+    courseSlug: string;
+  }) {
+    const { userId, courseSlug } = params;
+    const course = ALL_COURSES.find((c) => c.slug === courseSlug);
+    const courseLessons = getLessonsForCourse(courseSlug);
+
+    if (courseLessons.length === 0) {
+      return null;
+    }
+
+    if (!userId) {
+      return {
+        lesson: courseLessons[0],
+        course: course || { slug: courseSlug, title: courseSlug },
+        url: `/courses/${courseSlug}/lessons/${courseLessons[0].slug}`,
+      };
+    }
+
+    const userObjId = new mongoose.Types.ObjectId(String(userId));
+    const progressRecords = await Progress.find({
+      userId: userObjId,
+      lessonId: { $in: courseLessons.map((l) => l.slug) },
+    }).lean();
+
+    const progressMap = new Map<string, any>(progressRecords.map((p) => [p.lessonId, p]));
+    const completedSet = new Set(
+      progressRecords.filter((p) => p.status === "completed").map((p) => p.lessonId)
+    );
+
+    // 1. In-progress lesson
+    const inProg = courseLessons.find((l) => progressMap.get(l.slug)?.status === "in-progress");
+    if (inProg) {
+      return {
+        lesson: inProg,
+        course: course || { slug: courseSlug, title: courseSlug },
+        progress: progressMap.get(inProg.slug),
+        url: `/courses/${courseSlug}/lessons/${inProg.slug}`,
+      };
+    }
+
+    // 2. Next uncompleted lesson
+    const nextUncompleted = courseLessons.find((l) => !completedSet.has(l.slug));
+    if (nextUncompleted) {
+      return {
+        lesson: nextUncompleted,
+        course: course || { slug: courseSlug, title: courseSlug },
+        progress: progressMap.get(nextUncompleted.slug),
+        url: `/courses/${courseSlug}/lessons/${nextUncompleted.slug}`,
+      };
+    }
+
+    // 3. Course completed -> first lesson
+    return {
+      lesson: courseLessons[0],
+      course: course || { slug: courseSlug, title: courseSlug },
+      progress: progressMap.get(courseLessons[0].slug),
+      url: `/courses/${courseSlug}/lessons/${courseLessons[0].slug}`,
+      isCourseCompleted: true,
     };
   }
 }
