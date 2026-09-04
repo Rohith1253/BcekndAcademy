@@ -1,49 +1,102 @@
 "use client";
 
-import { Award, BookOpen, ShieldCheck } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { Award, BookOpen, ShieldCheck, ArrowRight, Lock, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
-
-const badges = [
-  { label: "First Login", description: "Welcome aboard", earned: true, icon: Award },
-  { label: "First Lesson", description: "Started learning", earned: true, icon: BookOpen },
-  { label: "HTTP Master", description: "Completed HTTP module", earned: true, icon: ShieldCheck },
-  { label: "Node.js Expert", description: "Unlock at level 10", earned: false, icon: ShieldCheck },
-  { label: "Docker Builder", description: "Unlocks later", earned: false, icon: ShieldCheck },
-];
+import { useClient } from "@/lib/store";
+import { api } from "@/lib/api";
 
 export default function AchievementCard() {
+  const { user } = useClient();
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadAchievements() {
+      try {
+        if (user) {
+          const json = await api.get("/api/achievements/user");
+          if (json.success && Array.isArray(json.data?.achievements)) {
+            setAchievements(json.data.achievements);
+          }
+        } else {
+          const json = await api.get("/api/achievements");
+          if (json.success && Array.isArray(json.data)) {
+            setAchievements(json.data.map((a: any) => ({ ...a, unlocked: false })));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load achievements:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadAchievements();
+  }, [user]);
+
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+  const displayAchievements = achievements.slice(0, 6);
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.35 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
-      className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-7 shadow-2xl shadow-slate-950/30 backdrop-blur-xl"
+      className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-7 shadow-2xl shadow-slate-950/30 backdrop-blur-xl flex flex-col justify-between"
     >
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Achievements</p>
-          <h3 className="mt-3 text-2xl font-semibold text-white">Earned badges</h3>
+      <div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] font-semibold text-cyan-300">Milestones & Mastery</p>
+            <h3 className="mt-2 text-2xl font-bold text-white">Mastery Badges</h3>
+          </div>
+          <span className="rounded-full bg-cyan-500/10 border border-cyan-500/20 px-3.5 py-1 text-xs font-mono font-semibold text-cyan-300">
+            {unlockedCount} / {achievements.length || 22} Unlocked
+          </span>
         </div>
-        <span className="rounded-full bg-slate-900/90 px-4 py-2 text-sm text-slate-300">3 unlocked</span>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {displayAchievements.map((badge) => (
+            <div
+              key={badge.id || badge.title}
+              className={`rounded-2xl border p-4 transition ${
+                badge.unlocked
+                  ? "border-cyan-500/30 bg-slate-900/80 shadow-md shadow-cyan-950/20"
+                  : "border-white/5 bg-slate-950/50 opacity-60"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div
+                  className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${
+                    badge.unlocked
+                      ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30"
+                      : "bg-slate-900 text-slate-600 border border-white/5"
+                  }`}
+                >
+                  {badge.unlocked ? <Award className="h-5 w-5" /> : <Lock className="h-4 w-4" />}
+                </div>
+                <span className="text-[10px] font-mono text-cyan-300">+{badge.xpReward} XP</span>
+              </div>
+              <h4 className={`mt-3 text-sm font-bold ${badge.unlocked ? "text-white" : "text-slate-400"}`}>
+                {badge.title}
+              </h4>
+              <p className="mt-1 text-xs text-slate-400 line-clamp-2">{badge.description}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {badges.map((badge) => {
-          const Icon = badge.icon;
-          return (
-            <div
-              key={badge.label}
-              className={`rounded-[1.75rem] border border-white/5 p-5 transition ${badge.earned ? "bg-slate-900/80 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.8)]" : "bg-slate-950/60 text-slate-500"}`}
-            >
-              <div className={`inline-flex h-12 w-12 items-center justify-center rounded-3xl ${badge.earned ? "bg-gradient-to-br from-violet-500 to-sky-500 text-white" : "bg-slate-800/80 text-slate-500"}`}>
-                <Icon className="h-6 w-6" />
-              </div>
-              <h4 className={`mt-5 text-lg font-semibold ${badge.earned ? "text-white" : "text-slate-400"}`}>{badge.label}</h4>
-              <p className="mt-2 text-sm leading-6 text-slate-400">{badge.description}</p>
-            </div>
-          );
-        })}
+      <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-end">
+        <Link
+          href="/progress"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition"
+        >
+          <span>View All 22 Achievements in Progress Hub</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </motion.section>
   );

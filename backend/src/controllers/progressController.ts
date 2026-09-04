@@ -1,121 +1,117 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { Progress } from "../models/Progress";
 import { User } from "../models/User";
-import { Lesson } from "../models/Lesson";
-import { addXP } from "../services/xpService";
-import { sanitizeStringParam } from "../utils/validation";
+import { calculateLevelProgress } from "../services/xpService";
+import { ProgressService } from "../services/progressService";
 
+/**
+ * GET /api/progress
+ * Returns user progress overview or course-specific progress, plus level and streak info.
+ */
 export async function getProgress(req: AuthenticatedRequest, res: Response) {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
-    const lessonId = req.query.lessonId as string;
-    const courseId = req.query.courseId as string;
-    const status = req.query.status as string;
+    const { courseId, lessonId } = req.query;
+    const query: Record<string, any> = { userId };
 
-    const query: any = { userId: req.user.userId };
-    if (lessonId) query.lessonId = sanitizeStringParam(lessonId);
-    if (courseId) query.courseId = sanitizeStringParam(courseId);
-    if (status) query.status = sanitizeStringParam(status);
+    if (courseId) query.courseId = courseId;
+    if (lessonId) query.lessonId = lessonId;
 
     const progressRecords = await Progress.find(query).lean();
-    return res.status(200).json({ success: true, data: { progress: progressRecords, count: progressRecords.length } });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message || "Failed to fetch progress" });
-  }
-}
-
-export async function updateProgress(req: AuthenticatedRequest, res: Response) {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
-    }
-
-    const { lessonId, courseId, status, timeSpent } = req.body;
-    if (!lessonId) {
-      return res.status(400).json({ success: false, error: "Lesson ID is required" });
-    }
-
-    const sanitizedLessonId = sanitizeStringParam(lessonId);
-    if (!sanitizedLessonId) {
-      return res.status(400).json({ success: false, error: "Invalid lesson ID" });
-    }
-
-    // Normalize status: accept underscore variants (in_progress) and convert to hyphen (in-progress)
-    const VALID_STATUSES = ["not-started", "in-progress", "completed"] as const;
-    type ProgressStatus = (typeof VALID_STATUSES)[number];
-    const normalizeStatus = (s: string): ProgressStatus => {
-      const normalized = s.replace(/_/g, "-") as ProgressStatus;
-      return VALID_STATUSES.includes(normalized) ? normalized : "in-progress";
+    const userDoc = await User.findById(userId).lean();
+    const totalXP = userDoc?.totalXP || 0;
+    const levelInfo = calculateLevelProgress(totalXP);
+    const streak = {
+      currentStreak: userDoc?.currentStreak || 0,
+      longestStreak: userDoc?.longestStreak || 0,
     };
-    const normalizedStatus: ProgressStatus | undefined = status ? normalizeStatus(status) : undefined;
-
-    let progressRecord = await Progress.findOne({
-      userId: req.user.userId,
-      lessonId: sanitizedLessonId,
-    });
-
-    const isFirstTimeCompletion =
-      normalizedStatus === "completed" && (!progressRecord || progressRecord.status !== "completed");
-
-    if (!progressRecord) {
-      progressRecord = new Progress({
-        userId: req.user.userId,
-        lessonId: sanitizedLessonId,
-        courseId: courseId ? sanitizeStringParam(courseId) : undefined,
-        status: normalizedStatus || "in-progress",
-        progressPercentage: normalizedStatus === "completed" ? 100 : 0,
-        timeSpent: timeSpent || 0,
-        completedAt: normalizedStatus === "completed" ? new Date() : undefined,
-      });
-    } else {
-      if (normalizedStatus) {
-        progressRecord.status = normalizedStatus;
-        if (normalizedStatus === "completed") {
-          progressRecord.progressPercentage = 100;
-          if (!progressRecord.completedAt) {
-            progressRecord.completedAt = new Date();
-          }
-        }
-      }
-      if (timeSpent) {
-        progressRecord.timeSpent = (progressRecord.timeSpent || 0) + timeSpent;
-      }
-    }
-
-    await progressRecord.save();
-
-    let xpResult = null;
-    if (isFirstTimeCompletion) {
-      const dbUser = await User.findById(req.user.userId);
-      if (dbUser) {
-        const lesson = await Lesson.findOne({ slug: sanitizedLessonId }).lean();
-        const xpToAward = lesson?.xpReward || 100;
-
-        xpResult = addXP(dbUser.totalXP || 0, xpToAward);
-        dbUser.totalXP = xpResult.newXP;
-        dbUser.currentLevel = xpResult.newLevel;
-        await dbUser.save();
-      }
-    }
-
-    const updatedUser = await User.findById(req.user.userId)
-      .select("totalXP currentLevel currentStreak longestStreak")
-      .lean();
 
     return res.status(200).json({
       success: true,
       data: {
-        progress: progressRecord,
-        xpEarned: isFirstTimeCompletion ? xpResult?.xpGained || 100 : 0,
-        userStats: updatedUser,
+        records: progressRecords,
+        levelInfo: {
+          ...levelInfo,
+          currentLevel: levelInfo.level,
+          levelTitle: levelInfo.levelName,
+          xpInCurrentLevel: levelInfo.currentLevelXP,
+          xpRequiredForNextLevel: levelInfo.neededXP,
+          isMaxLevel: levelInfo.level >= 10,
+        },
+        streak,
       },
-      message: isFirstTimeCompletion ? "Lesson completed! XP awarded." : "Progress updated successfully",
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message || "Failed to update progress" });
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch progress",
+    });
   }
 }
+
+/**
+ * POST /api/progress
+ * Idempotently updates or completes lesson progress and awards XP.
+ */
+export async function updateProgress(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const { lessonId, courseId, moduleId, status, progressPercentage, timeSpent } = req.body;
+
+    if (!lessonId) {
+      return res.status(400).json({ success: false, error: "Missing required 'lessonId'" });
+    }
+
+    const result = await ProgressService.completeLesson({
+      userId,
+      lessonId,
+      courseId,
+      moduleId,
+      status: status || "completed",
+      progressPercentage: progressPercentage !== undefined ? Number(progressPercentage) : 100,
+      timeSpent: Number(timeSpent) || 0,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to update progress",
+    });
+  }
+}
+
+/**
+ * GET /api/progress/languages
+ * Returns 11-language competency progress metrics.
+ */
+export async function getLanguageProgressController(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    const result = await ProgressService.calculateLanguageProgress(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to calculate language progress",
+    });
+  }
+}
+
+export const getLanguageProgress = getLanguageProgressController;

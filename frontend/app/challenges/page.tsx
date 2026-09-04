@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import ChallengeCard from "@/components/challenges/ChallengeCard";
 import ChallengeFilters from "@/components/challenges/ChallengeFilters";
 import { api } from "@/lib/api";
-import { Terminal, Sparkles, Code2 } from "lucide-react";
+import { Terminal, Sparkles, Code2, Trophy, Layers } from "lucide-react";
 import type { CodingChallengeSummary } from "@/lib/challenge-types";
 
 export default function ChallengesCatalogPage() {
@@ -14,6 +14,7 @@ export default function ChallengesCatalogPage() {
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
+  const [selectedLanguage, setSelectedLanguage] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -47,10 +48,21 @@ export default function ChallengesCatalogPage() {
 
   const filteredChallenges = useMemo(() => {
     return challenges.filter((c) => {
+      // Language filter
+      if (selectedLanguage !== "All") {
+        const langLower = selectedLanguage.toLowerCase();
+        const supported = (c.supportedLanguages || []).map((l) => l.toLowerCase());
+        const primaryLang = (c.language || "").toLowerCase();
+        if (!supported.includes(langLower) && primaryLang !== langLower) {
+          return false;
+        }
+      }
+
       // Category filter
       if (selectedCategory !== "All" && c.category !== selectedCategory) {
         return false;
       }
+
       // Difficulty filter
       if (
         selectedDifficulty !== "All" &&
@@ -58,6 +70,7 @@ export default function ChallengesCatalogPage() {
       ) {
         return false;
       }
+
       // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -66,9 +79,18 @@ export default function ChallengesCatalogPage() {
         const matchCat = c.category.toLowerCase().includes(q);
         if (!matchTitle && !matchDesc && !matchCat) return false;
       }
+
       return true;
     });
-  }, [challenges, selectedCategory, selectedDifficulty, searchQuery]);
+  }, [challenges, selectedLanguage, selectedCategory, selectedDifficulty, searchQuery]);
+
+  const totalXP = useMemo(() => {
+    return challenges.reduce((acc, c) => acc + (c.xpReward || 50), 0);
+  }, [challenges]);
+
+  const completedCount = useMemo(() => {
+    return challenges.filter((c) => c.isCompleted).length;
+  }, [challenges]);
 
   return (
     <div className="min-h-screen bg-[#060813] px-4 py-24 text-slate-100 sm:px-6 lg:px-10">
@@ -78,19 +100,33 @@ export default function ChallengesCatalogPage() {
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
           <div className="absolute -left-20 -bottom-20 h-72 w-72 rounded-full bg-fuchsia-500/10 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-mono font-medium text-cyan-300 uppercase tracking-widest">
-              <Terminal className="h-3.5 w-3.5" />
-              <span>Interactive Coding System</span>
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
+            <div className="max-w-3xl space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-mono font-medium text-cyan-300 uppercase tracking-widest">
+                <Terminal className="h-3.5 w-3.5" />
+                <span>32+ Production Challenges</span>
+              </div>
+
+              <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                Backend Coding Challenges
+              </h1>
+
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+                Master production backend engineering patterns across 11 language stacks: rate limiters, circuit breakers, JWT verifiers, connection pools, and distributed saga coordinators.
+              </p>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-              Practice Backend Development
-            </h1>
-
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-              Write real code. Run tests. Build backend skills. Solve realistic Node.js, Express, REST API, MongoDB, and Authentication challenges directly in your browser.
-            </p>
+            {/* Quick Challenge Stats */}
+            <div className="flex gap-4">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 backdrop-blur-md text-center min-w-[110px]">
+                <p className="text-2xl font-extrabold text-cyan-400">{challenges.length}</p>
+                <p className="text-[11px] text-slate-400 font-mono uppercase mt-1">Challenges</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 backdrop-blur-md text-center min-w-[110px]">
+                <p className="text-2xl font-extrabold text-amber-400">{totalXP.toLocaleString()}</p>
+                <p className="text-[11px] text-slate-400 font-mono uppercase mt-1">Available XP</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -101,33 +137,34 @@ export default function ChallengesCatalogPage() {
           onSelectCategory={setSelectedCategory}
           selectedDifficulty={selectedDifficulty}
           onSelectDifficulty={setSelectedDifficulty}
+          selectedLanguage={selectedLanguage}
+          onSelectLanguage={setSelectedLanguage}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
 
-        {/* Content State */}
+        {/* Challenge Grid */}
         {loading ? (
-          <div className="flex min-h-[300px] flex-col items-center justify-center gap-3">
-            <div className="h-7 w-7 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
-            <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
-              Loading challenge library...
-            </span>
+          <div className="py-24 text-center">
+            <div className="inline-flex items-center gap-3 text-cyan-400 font-mono text-sm">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+              <span>Loading Backend Challenges...</span>
+            </div>
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center space-y-3">
-            <h3 className="text-lg font-bold text-rose-400">Failed to Load Challenges</h3>
-            <p className="text-xs text-slate-400 font-mono">{error}</p>
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-950/20 p-8 text-center text-rose-300">
+            <p className="font-semibold">{error}</p>
           </div>
         ) : filteredChallenges.length === 0 ? (
-          <div className="rounded-2xl border border-white/[0.08] bg-slate-900/40 p-12 text-center space-y-3">
-            <Code2 className="w-8 h-8 text-slate-600 mx-auto" />
-            <h3 className="text-base font-bold text-white">No Challenges Match Your Filters</h3>
-            <p className="text-xs text-slate-400">Try clearing your search query or selecting a different category.</p>
+          <div className="rounded-3xl border border-white/5 bg-slate-950/40 py-20 text-center text-slate-400">
+            <Code2 className="mx-auto h-12 w-12 text-slate-600 mb-3" />
+            <p className="text-lg font-semibold text-slate-300">No challenges match the active filters</p>
+            <p className="text-xs text-slate-500 mt-1">Try resetting the difficulty or stack filter.</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredChallenges.map((challenge) => (
-              <ChallengeCard key={challenge._id} challenge={challenge} />
+              <ChallengeCard key={challenge.id || challenge.slug} challenge={challenge} />
             ))}
           </div>
         )}

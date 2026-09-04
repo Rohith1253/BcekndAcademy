@@ -4,17 +4,20 @@ import { AuthenticatedRequest } from "../middleware/auth";
 import { CodingChallenge } from "../models/CodingChallenge";
 import { CodingSubmission } from "../models/CodingSubmission";
 import { User } from "../models/User";
-import { runTests, evaluateSubmission, executeCode } from "../services/codeExecution.service";
+import { getChallengeEvaluator, MAX_CODE_SIZE_BYTES } from "../services/execution";
+import { addXP, calculateLevelProgress } from "../services/xpService";
+import { AchievementService } from "../services/achievementService";
 
 /**
  * GET /api/challenges
  * Returns all published challenges without hidden tests.
- * Optionally flags challenges solved by the authenticated user.
+ * Supports filtering by category, difficulty, language, and search query.
  */
 export async function getChallenges(req: AuthenticatedRequest, res: Response) {
   try {
     const category = req.query.category as string;
     const difficulty = req.query.difficulty as string;
+    const language = req.query.language as string;
     const search = req.query.search as string;
 
     const query: Record<string, any> = { isPublished: true };
@@ -25,6 +28,10 @@ export async function getChallenges(req: AuthenticatedRequest, res: Response) {
     if (difficulty && difficulty !== "All") {
       query.difficulty = difficulty.toLowerCase();
     }
+    if (language && language !== "All") {
+      const langLower = language.toLowerCase();
+      query.$or = [{ language: langLower }, { supportedLanguages: langLower }];
+    }
     if (search && search.trim()) {
       query.$or = [
         { title: { $regex: search.trim(), $options: "i" } },
@@ -33,13 +40,11 @@ export async function getChallenges(req: AuthenticatedRequest, res: Response) {
       ];
     }
 
-    // Always exclude hiddenTests from catalog output
     const challenges = await CodingChallenge.find(query)
       .select("-hiddenTests")
       .sort({ order: 1, createdAt: 1 })
       .lean();
 
-    // Check which challenges current user has passed
     let solvedSlugs: string[] = [];
     if (req.user?.userId) {
       solvedSlugs = await CodingSubmission.find({
@@ -70,7 +75,7 @@ export async function getChallenges(req: AuthenticatedRequest, res: Response) {
 
 /**
  * GET /api/challenges/:slug
- * Returns a single challenge by slug, strictly hiding hiddenTests.
+ * Returns a single challenge by slug, hiding hiddenTests.
  */
 export async function getChallengeBySlugController(req: AuthenticatedRequest, res: Response) {
   try {
@@ -126,19 +131,23 @@ export async function getChallengeBySlugController(req: AuthenticatedRequest, re
 
 /**
  * POST /api/challenges/:slug/run
- * Evaluates ONLY visible tests. Returns immediate console logs and test details.
+ * Safely evaluates visible tests via ChallengeEvaluator.
  */
 export async function runChallengeTests(req: Request, res: Response) {
   try {
     const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
-    const { code } = req.body;
+    const { code, language } = req.body;
 
     if (typeof code !== "string" || !code.trim()) {
       return res.status(400).json({ success: false, error: "Code content is required" });
     }
 
-    if (code.length > 50000) {
-      return res.status(400).json({ success: false, error: "Code submission exceeds maximum limit (50KB)" });
+    const codeBytes = Buffer.byteLength(code, "utf8");
+    if (codeBytes > MAX_CODE_SIZE_BYTES) {
+      return res.status(413).json({
+        success: false,
+        error: `Code size exceeds maximum limit of 64 KB (${(codeBytes / 1024).toFixed(1)} KB).`,
+      });
     }
 
     const challenge = await CodingChallenge.findOne({ slug: slug.toLowerCase() });
@@ -146,15 +155,29 @@ export async function runChallengeTests(req: Request, res: Response) {
       return res.status(404).json({ success: false, error: "Challenge not found" });
     }
 
-    const visibleTests = challenge.visibleTests || [];
-    const outcome = runTests(code, visibleTests, 2000);
+    const evaluator = getChallengeEvaluator();
+    const evaluation = await evaluator.evaluateChallenge({
+      code,
+      language: language || challenge.language || "javascript",
+      visibleTests: challenge.visibleTests || [],
+      hiddenTests: [],
+      xpReward: challenge.xpReward || 50,
+      alreadyCompleted: false,
+    });
 
     return res.status(200).json({
       success: true,
       data: {
-        results: outcome.testResults,
-        logs: outcome.logs,
-        executionTime: outcome.executionTime,
+        status: evaluation.status,
+        passed: evaluation.status === "passed",
+        score: evaluation.score,
+        passedTests: evaluation.passedTests,
+        totalTests: evaluation.totalTests,
+        results: evaluation.visibleTestResults,
+        logs: evaluation.logs,
+        executionTime: evaluation.executionTime,
+        message: evaluation.message,
+        provider: evaluation.provider,
       },
     });
   } catch (error: any) {
@@ -167,7 +190,7 @@ export async function runChallengeTests(req: Request, res: Response) {
 
 /**
  * POST /api/challenges/:slug/submit
- * Evaluates BOTH visible and hidden tests. Saves submission and awards XP once.
+ * Safely evaluates both visible and hidden tests, records submission, awards XP, and checks achievements.
  */
 export async function submitChallengeSolution(req: AuthenticatedRequest, res: Response) {
   try {
@@ -176,14 +199,18 @@ export async function submitChallengeSolution(req: AuthenticatedRequest, res: Re
     }
 
     const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
-    const { code } = req.body;
+    const { code, language } = req.body;
 
     if (typeof code !== "string" || !code.trim()) {
       return res.status(400).json({ success: false, error: "Code content is required" });
     }
 
-    if (code.length > 50000) {
-      return res.status(400).json({ success: false, error: "Code submission exceeds maximum limit (50KB)" });
+    const codeBytes = Buffer.byteLength(code, "utf8");
+    if (codeBytes > MAX_CODE_SIZE_BYTES) {
+      return res.status(413).json({
+        success: false,
+        error: `Code size exceeds maximum limit of 64 KB (${(codeBytes / 1024).toFixed(1)} KB).`,
+      });
     }
 
     const challenge = await CodingChallenge.findOne({ slug: slug.toLowerCase() });
@@ -191,23 +218,85 @@ export async function submitChallengeSolution(req: AuthenticatedRequest, res: Re
       return res.status(404).json({ success: false, error: "Challenge not found" });
     }
 
-    const outcome = await evaluateSubmission(req.user.userId, challenge, code);
+    // Check if user has already passed
+    const previousPass = await CodingSubmission.findOne({
+      userId: req.user.userId,
+      challengeSlug: challenge.slug,
+      status: "passed",
+    });
+    const alreadyCompleted = !!previousPass;
+
+    const targetLang = language || challenge.language || "javascript";
+    const evaluator = getChallengeEvaluator();
+    const outcome = await evaluator.evaluateChallenge({
+      code,
+      language: targetLang,
+      visibleTests: challenge.visibleTests || [],
+      hiddenTests: challenge.hiddenTests || [],
+      xpReward: challenge.xpReward || 50,
+      alreadyCompleted,
+    });
+
+    const isPassed = outcome.status === "passed";
+
+    // Update user XP if newly passed
+    let userLevelInfo = null;
+    if (isPassed && !alreadyCompleted && outcome.earnedXP > 0) {
+      const dbUser = await User.findById(req.user.userId);
+      if (dbUser) {
+        const xpResult = addXP(dbUser.totalXP || 0, outcome.earnedXP);
+        dbUser.totalXP = xpResult.newXP;
+        dbUser.currentLevel = xpResult.newLevel;
+        await dbUser.save();
+        userLevelInfo = calculateLevelProgress(dbUser.totalXP);
+      }
+    }
+
+    // Record submission
+    const submissionRecord = new CodingSubmission({
+      userId: req.user.userId,
+      challengeId: challenge._id,
+      challengeSlug: challenge.slug,
+      code,
+      language: targetLang,
+      status: isPassed ? "passed" : "failed",
+      testsPassed: outcome.passedTests,
+      totalTests: outcome.totalTests,
+      score: outcome.score,
+      earnedXP: outcome.earnedXP,
+      executionTime: outcome.executionTime,
+      testResults: outcome.visibleTestResults.map((t) => ({
+        name: t.name,
+        passed: t.passed,
+        expected: t.expected,
+        received: t.received,
+        error: t.error,
+      })),
+      submittedAt: new Date(),
+    });
+    await submissionRecord.save();
+
+    // Check and unlock achievements
+    const achievementsResult = await AchievementService.checkAndUnlockAchievements(req.user.userId);
 
     return res.status(200).json({
       success: true,
       data: {
-        passed: outcome.success,
+        passed: isPassed,
         score: outcome.score,
-        testsPassed: outcome.testsPassed,
+        testsPassed: outcome.passedTests,
         totalTests: outcome.totalTests,
         earnedXP: outcome.earnedXP,
-        alreadyCompleted: outcome.alreadyCompleted,
+        alreadyCompleted,
         visibleResults: outcome.visibleTestResults,
         hiddenTestsPassed: outcome.hiddenTestsPassed,
         hiddenTestsTotal: outcome.hiddenTestsTotal,
         logs: outcome.logs,
         executionTime: outcome.executionTime,
         message: outcome.message,
+        provider: outcome.provider,
+        userLevelInfo,
+        unlockedAchievements: achievementsResult.unlocked,
       },
     });
   } catch (error: any) {
@@ -254,8 +343,8 @@ export async function getChallengeSubmissionsForSlug(req: AuthenticatedRequest, 
 }
 
 /**
- * GET /api/challenges/progress
- * Returns user's overall coding challenge stats and progress.
+ * GET /api/challenges/user/progress (also /api/challenges/progress)
+ * Returns user challenge completion statistics.
  */
 export async function getChallengeProgress(req: AuthenticatedRequest, res: Response) {
   try {
@@ -263,37 +352,29 @@ export async function getChallengeProgress(req: AuthenticatedRequest, res: Respo
       return res.status(401).json({ success: false, error: "Unauthorized" });
     }
 
-    const totalChallenges = await CodingChallenge.countDocuments({ isPublished: true });
-
-    const completedSlugs = await CodingSubmission.find({
+    const totalAvailable = await CodingChallenge.countDocuments({ isPublished: true });
+    const solvedSubmissions = await CodingSubmission.find({
       userId: req.user.userId,
       status: "passed",
     }).distinct("challengeSlug");
 
-    const userObjId = new mongoose.Types.ObjectId(req.user.userId);
-    const xpAggregate = await CodingSubmission.aggregate([
-      { $match: { userId: userObjId } },
-      { $group: { _id: null, totalXP: { $sum: "$earnedXP" } } },
-    ]);
-
-    const totalCodingXP = xpAggregate[0]?.totalXP || 0;
-
-    const user = await User.findById(req.user.userId).select("currentStreak totalXP currentLevel").lean();
+    const passedCount = solvedSubmissions.length;
+    const progressPercentage =
+      totalAvailable > 0 ? Math.min(100, Math.round((passedCount / totalAvailable) * 100)) : 0;
 
     return res.status(200).json({
       success: true,
       data: {
-        totalChallenges,
-        completedCount: completedSlugs.length,
-        totalCodingXP,
-        currentStreak: user?.currentStreak || 0,
-        userLevel: user?.currentLevel || 1,
+        totalAvailable,
+        completedCount: passedCount,
+        solvedSlugs: solvedSubmissions,
+        progressPercentage,
       },
     });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      error: error.message || "Failed to fetch coding progress",
+      error: error.message || "Failed to fetch challenge progress",
     });
   }
 }

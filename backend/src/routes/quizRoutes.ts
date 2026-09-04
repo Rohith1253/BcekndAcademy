@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { submitQuiz, getQuizResults } from "../controllers/quizController";
 import { authenticateUser } from "../middleware/auth";
+import { submitQuiz, getQuizHistory, getQuizStats } from "../controllers/quizController";
 
 const router = Router();
 
 router.post("/submit", authenticateUser, submitQuiz);
-router.get("/results", authenticateUser, getQuizResults);
+router.get("/history", authenticateUser, getQuizHistory);
+router.get("/stats", authenticateUser, getQuizStats);
 
 export default router;

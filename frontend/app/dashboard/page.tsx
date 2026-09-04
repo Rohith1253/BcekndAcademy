@@ -6,6 +6,7 @@ import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
 import ContinuePlayingGames from "@/components/dashboard/ContinuePlayingGames";
 import ContinueCoding from "@/components/dashboard/ContinueCoding";
 import CodingLabRecentWidget from "@/components/dashboard/CodingLabRecentWidget";
+import LanguageCompetencyWidget from "@/components/dashboard/LanguageCompetencyWidget";
 
 export default function DashboardPage() {
   return (
@@ -13,6 +14,9 @@ export default function DashboardPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <WelcomeBanner />
         <StatsCards />
+
+        {/* 11-Language Competency Matrix Overview */}
+        <LanguageCompetencyWidget />
 
         {/* Continue Educational Games Section */}
         <ContinuePlayingGames />

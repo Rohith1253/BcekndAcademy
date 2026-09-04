@@ -1,354 +1,559 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
-import PlaygroundHeader from "@/components/playground/PlaygroundHeader";
-import FileExplorer from "@/components/playground/FileExplorer";
-import CodeEditor from "@/components/playground/CodeEditor";
-import ConsoleLogs from "@/components/playground/ConsoleLogs";
-import OutputPanel from "@/components/playground/OutputPanel";
-import ChallengePanel from "@/components/playground/ChallengePanel";
-import HintPanel from "@/components/playground/HintPanel";
-import TestResults from "@/components/playground/TestResults";
-import SolutionModal from "@/components/playground/SolutionModal";
-import RunButton from "@/components/playground/RunButton";
-import { ALL_CHALLENGES, CHALLENGES_BY_CATEGORY } from "@/data/challenges";
-import type { Challenge } from "@/data/challenges";
-import { useClient } from "@/lib/store";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Play,
+  RotateCcw,
+  Copy,
+  Check,
+  Terminal,
+  Code2,
+  Sparkles,
+  Layers,
+  Zap,
+  ShieldCheck,
+  Clock,
+  Send,
+  Globe,
+  ChevronDown,
+  Info,
+  Maximize2,
+  Minimize2,
+  Cpu
+} from "lucide-react";
+import { PLAYGROUND_LANGUAGES, PlaygroundLanguageConfig } from "@/data/playground-templates";
 import { api } from "@/lib/api";
 
-type FileNode = {
-  name: string;
-  type: "file" | "folder";
-  path: string;
-  children?: FileNode[];
-};
+function PlaygroundInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlLang = searchParams?.get("lang") || "javascript";
 
-export default function PlaygroundPage() {
-  const client = useClient();
-  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(
-    Object.values(ALL_CHALLENGES)[0]
+  const [selectedLanguageKey, setSelectedLanguageKey] = useState<string>(
+    PLAYGROUND_LANGUAGES[urlLang] ? urlLang : "javascript"
   );
-  const [code, setCode] = useState(selectedChallenge?.starterCode || "");
-  const [isRunning, setIsRunning] = useState(false);
-  const [output, setOutput] = useState("");
-  const [error, setError] = useState("");
-  const [hintLevel, setHintLevel] = useState(0);
-  const [showSolution, setShowSolution] = useState(false);
-  const [testResults, setTestResults] = useState<any[]>([]);
-  const [rightTab, setRightTab] = useState("challenge");
-  const [solvedChallengeIds, setSolvedChallengeIds] = useState<string[]>([]);
-  const [consoleLogs, setConsoleLogs] = useState<{ log: string[]; error: string[]; warn: string[] }>({
-    log: [],
-    error: [],
-    warn: [],
-  });
+  const currentLangConfig = PLAYGROUND_LANGUAGES[selectedLanguageKey] || PLAYGROUND_LANGUAGES.javascript;
 
-  // Fetch user solved challenge history on load if authenticated
+  const [code, setCode] = useState<string>(currentLangConfig.starterCode);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [outputLines, setOutputLines] = useState<string[]>([]);
+  const [errorLines, setErrorLines] = useState<string[]>([]);
+  const [executionStats, setExecutionStats] = useState<{
+    executionTimeMs: number;
+    provider: string;
+    status: string;
+    exitCode: number;
+    patterns?: string[];
+  } | null>(null);
+
+  const [copied, setCopied] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<"output" | "http" | "info">("output");
+  const [httpMethod, setHttpMethod] = useState<string>("GET");
+  const [httpPath, setHttpPath] = useState<string>("/api/users");
+  const [httpBody, setHttpBody] = useState<string>('{\n  "name": "David",\n  "role": "Security Engineer"\n}');
+  const [httpResponse, setHttpResponse] = useState<any>(null);
+
+  // Sync state when URL parameter or selected language changes
   useEffect(() => {
-    async function loadUserSubmissions() {
-      if (!client.user) return;
-      try {
-        const json = await api.get("/api/challenges/submissions");
-        if (json.success && json.data?.solvedChallengeIds) {
-          setSolvedChallengeIds(json.data.solvedChallengeIds);
-        }
-      } catch (err) {
-        console.error("Fetch submissions error:", err);
-      }
+    if (PLAYGROUND_LANGUAGES[urlLang] && urlLang !== selectedLanguageKey) {
+      setSelectedLanguageKey(urlLang);
+      setCode(PLAYGROUND_LANGUAGES[urlLang].starterCode);
+      setOutputLines([]);
+      setErrorLines([]);
+      setExecutionStats(null);
     }
+  }, [urlLang]);
 
-    loadUserSubmissions();
-  }, [client.user]);
-
-  const files: FileNode[] = [
-    {
-      name: "solution.js",
-      type: "file",
-      path: "solution.js",
-    },
-    {
-      name: "tests",
-      type: "folder",
-      path: "tests",
-      children: [
-        { name: "test.js", type: "file", path: "tests/test.js" },
-        { name: "helpers.js", type: "file", path: "tests/helpers.js" },
-      ],
-    },
-    {
-      name: "data.json",
-      type: "file",
-      path: "data.json",
-    },
-  ];
-
-  const handleChallengeSelect = (challengeId: string) => {
-    const challenge = ALL_CHALLENGES[challengeId];
-    if (challenge) {
-      setSelectedChallenge(challenge);
-      setCode(challenge.starterCode);
-      setOutput("");
-      setError("");
-      setHintLevel(0);
-      setTestResults([]);
-      setConsoleLogs({ log: [], error: [], warn: [] });
-    }
+  const handleLanguageChange = (langKey: string) => {
+    setSelectedLanguageKey(langKey);
+    setCode(PLAYGROUND_LANGUAGES[langKey].starterCode);
+    setOutputLines([]);
+    setErrorLines([]);
+    setExecutionStats(null);
+    setHttpResponse(null);
+    router.push(`/playground?lang=${langKey}`, { scroll: false });
   };
 
-  const handleRun = useCallback(async () => {
-    if (!selectedChallenge || isRunning) return;
+  const handleResetCode = () => {
+    setCode(currentLangConfig.starterCode);
+    setOutputLines([]);
+    setErrorLines([]);
+    setExecutionStats(null);
+  };
 
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRunCode = useCallback(async () => {
+    if (isRunning) return;
     setIsRunning(true);
-    setError("");
-    setOutput("");
-    setConsoleLogs({ log: [], error: [], warn: [] });
+    setErrorLines([]);
+    setOutputLines(["⚡ Compiling and analyzing backend script in sandbox..."]);
 
     try {
-      if (client.user) {
-        // Real server-side code execution via VM sandbox API endpoint
-        const json = await api.post("/api/challenges/submit", {
-          challengeId: selectedChallenge.id,
-          code,
-          timeSpent: 30,
+      const response = await api.post("/api/code/execute", {
+        language: selectedLanguageKey,
+        code,
+        timeout: 5000,
+      });
+
+      if (response.success && response.data) {
+        const { stdout, stderr, executionTimeMs, provider, exitCode, status, patterns } = response.data;
+        setOutputLines(stdout || ["(No stdout emitted)"]);
+        setErrorLines(stderr || []);
+        setExecutionStats({
+          executionTimeMs: executionTimeMs || 15,
+          provider: provider || "mock",
+          status: status || "success",
+          exitCode: exitCode || 0,
+          patterns,
         });
-
-        if (json.success && json.data) {
-          const { success, testsPassed, totalTests, testResults: serverTests, executionTimeMs, xpEarned, alreadyCompleted } = json.data;
-
-          setTestResults(serverTests || []);
-          setOutput(
-            success
-              ? `✓ Challenge Solved! Passed ${testsPassed}/${totalTests} test cases in ${executionTimeMs || 10}ms.\n${
-                  alreadyCompleted ? "(Previously solved, 0 additional XP)" : `+${xpEarned} XP Earned!`
-                }`
-              : `❌ ${testsPassed}/${totalTests} tests passed. Check test details.`
-          );
-
-          setConsoleLogs({
-            log: [
-              `Execution time: ${executionTimeMs || 5}ms`,
-              `Tests Passed: ${testsPassed} / ${totalTests}`,
-              ...(serverTests?.map((t: any) => `${t.passed ? '✓' : '✗'} ${t.name}${t.error ? `: ${t.error}` : ''}`) || []),
-            ],
-            error: success ? [] : ["Some test cases failed."],
-            warn: [],
-          });
-
-          if (success) {
-            setSolvedChallengeIds((prev) => Array.from(new Set([...prev, selectedChallenge.id])));
-            await client.refreshUser();
-          }
-
-          setRightTab("tests");
-        } else {
-          setError(json.error || "Execution failed");
-        }
       } else {
-        // Fallback for unauthenticated preview mode using local evaluation
-        const { evaluateChallengeCode } = await import("@/lib/challenge-evaluator");
-        const outcome = evaluateChallengeCode(code, selectedChallenge.testCases);
-
-        setTestResults(outcome.testResults);
-        setOutput(`Ran ${outcome.testsPassed}/${outcome.totalTests} tests in ${outcome.executionTimeMs}ms.`);
-        setConsoleLogs({
-          log: outcome.testResults.map((t: any) => `${t.passed ? '✓' : '✗'} ${t.name}`),
-          error: [],
-          warn: [],
+        setErrorLines([response.error || "Failed to execute code in sandbox."]);
+        setExecutionStats({
+          executionTimeMs: 0,
+          provider: "mock",
+          status: "error",
+          exitCode: 1,
         });
-        setRightTab("tests");
       }
     } catch (err: any) {
-      console.error("Execution error:", err);
-      setError(err?.message || "Execution failed");
+      setErrorLines([err.message || "Network execution error."]);
+      setExecutionStats({
+        executionTimeMs: 0,
+        provider: "mock",
+        status: "error",
+        exitCode: 1,
+      });
     } finally {
       setIsRunning(false);
     }
-  }, [selectedChallenge, code, client, isRunning]);
+  }, [code, selectedLanguageKey, isRunning]);
 
-  const handleRequestHint = () => {
-    if (hintLevel < (selectedChallenge?.hints.length || 0)) {
-      setHintLevel(hintLevel + 1);
+  const handleSendMockHttp = async () => {
+    setIsRunning(true);
+    try {
+      await new Promise((r) => setTimeout(r, 450));
+      let parsedBody = null;
+      try {
+        if (httpMethod !== "GET") parsedBody = JSON.parse(httpBody);
+      } catch {}
+
+      if (httpPath.includes("health")) {
+        setHttpResponse({
+          status: 200,
+          statusText: "OK",
+          headers: { "content-type": "application/json", "x-powered-by": currentLangConfig.framework },
+          data: { status: "healthy", timestamp: new Date().toISOString(), framework: currentLangConfig.framework }
+        });
+      } else if (httpMethod === "GET") {
+        setHttpResponse({
+          status: 200,
+          statusText: "OK",
+          headers: { "content-type": "application/json", "x-powered-by": currentLangConfig.framework },
+          data: {
+            success: true,
+            count: 3,
+            data: [
+              { id: 1, name: "Alice", role: "Backend Engineer" },
+              { id: 2, name: "Bob", role: "DevOps Architect" },
+              { id: 3, name: "Charlie", role: "Systems Architect" }
+            ]
+          }
+        });
+      } else {
+        setHttpResponse({
+          status: 201,
+          statusText: "Created",
+          headers: { "content-type": "application/json", "x-powered-by": currentLangConfig.framework },
+          data: {
+            success: true,
+            id: 4,
+            payloadReceived: parsedBody || { name: "David", role: "Security Engineer" },
+            message: "Record persisted successfully in simulation database"
+          }
+        });
+      }
+    } finally {
+      setIsRunning(false);
     }
   };
 
-  if (!selectedChallenge) {
-    return <div className="p-8 text-white">Loading challenge workspace...</div>;
-  }
+  // Keyboard shortcut Ctrl+Enter to Run
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleRunCode();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleRunCode]);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
-      <PlaygroundHeader />
+    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col pt-16">
+      {/* Top Controls Header */}
+      <header className="border-b border-white/10 bg-[#070b1a]/95 backdrop-blur-xl px-4 py-3 sm:px-6 sticky top-16 z-30">
+        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-4">
+          {/* Left: Language Stack Selector */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Code2 className="h-5 w-5 text-cyan-400" />
+              <span className="text-sm font-bold text-white uppercase tracking-wider hidden sm:inline">
+                Playground:
+              </span>
+            </div>
 
-      <main className="flex-1 overflow-hidden">
-        <div className="grid h-full grid-cols-1 gap-4 p-6 lg:grid-cols-5">
-          {/* Left: File Explorer */}
-          <div className="hidden lg:block lg:col-span-1 h-full overflow-hidden">
-            <FileExplorer
-              files={files}
-              onFileSelect={() => {}}
-              selectedFile="solution.js"
-            />
+            <div className="relative">
+              <select
+                value={selectedLanguageKey}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="appearance-none rounded-xl border border-cyan-500/30 bg-slate-900/90 py-1.5 pl-3.5 pr-9 text-xs sm:text-sm font-semibold text-cyan-300 shadow-lg shadow-cyan-950/40 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 cursor-pointer"
+              >
+                {Object.values(PLAYGROUND_LANGUAGES).map((lang) => (
+                  <option key={lang.id} value={lang.id} className="bg-slate-900 text-white">
+                    {lang.name} — {lang.framework}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-400" />
+            </div>
+
+            <span className={`rounded-lg border px-2.5 py-1 text-[11px] font-mono font-medium hidden md:inline-flex items-center gap-1.5 ${currentLangConfig.badgeColor}`}>
+              <Cpu className="h-3 w-3" />
+              {currentLangConfig.version}
+            </span>
           </div>
 
-          {/* Center: Code Editor */}
-          <div className="lg:col-span-2 h-full flex flex-col gap-4 overflow-hidden">
-            <div className="flex-1 overflow-hidden">
-              <CodeEditor
-                value={code}
-                onChange={setCode}
-                language="javascript"
-              />
-            </div>
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={handleResetCode}
+              title="Reset Code to Template"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Reset</span>
+            </button>
 
-            {/* Bottom: Console & Output */}
-            <div className="grid gap-4 grid-cols-2 h-40 overflow-hidden">
-              <ConsoleLogs
-                logs={consoleLogs}
-                onClear={() => setConsoleLogs({ log: [], error: [], warn: [] })}
-              />
-              <OutputPanel
-                output={output}
-                error={error}
-                isLoading={isRunning}
-              />
-            </div>
+            <button
+              onClick={handleCopyCode}
+              title="Copy Code"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
+            >
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
+            </button>
 
-            {/* Run Button */}
-            <div className="flex justify-left pt-2">
-              <RunButton
-                isLoading={isRunning}
-                isRunning={isRunning}
-                onClick={handleRun}
-                xpReward={selectedChallenge.xpReward}
-              />
-            </div>
-          </div>
-
-          {/* Right: Challenge Panel & Controls */}
-          <div className="lg:col-span-2 h-full flex flex-col gap-4 overflow-hidden">
-            <div className="flex gap-2 border-b border-white/10">
-              <button
-                onClick={() => setRightTab("challenge")}
-                className={`px-4 py-2 text-sm font-semibold transition ${
-                  rightTab === "challenge"
-                    ? "text-white border-b-2 border-violet-500"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Challenge
-              </button>
-              <button
-                onClick={() => setRightTab("hints")}
-                className={`px-4 py-2 text-sm font-semibold transition ${
-                  rightTab === "hints"
-                    ? "text-white border-b-2 border-violet-500"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Hints ({selectedChallenge.hints.length})
-              </button>
-              <button
-                onClick={() => setRightTab("tests")}
-                className={`px-4 py-2 text-sm font-semibold transition ${
-                  rightTab === "tests"
-                    ? "text-white border-b-2 border-violet-500"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Tests {testResults.length > 0 && `(${testResults.filter(t => t.passed).length}/${testResults.length})`}
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {rightTab === "challenge" && (
-                <ChallengePanel
-                  title={selectedChallenge.title}
-                  description={selectedChallenge.description}
-                  difficulty={selectedChallenge.difficulty}
-                  xpReward={selectedChallenge.xpReward}
-                  timeEstimate={selectedChallenge.timeEstimate}
-                  learningPoints={selectedChallenge.learningPoints}
-                  onRunCode={handleRun}
-                  onShowSolution={() => setShowSolution(true)}
-                />
+            <button
+              onClick={handleRunCode}
+              disabled={isRunning}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold shadow-lg transition ${
+                isRunning
+                  ? "bg-cyan-600/50 text-slate-300 cursor-not-allowed"
+                  : "bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-500/20 active:scale-95"
+              }`}
+            >
+              {isRunning ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+                  <span>Executing...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 fill-current" />
+                  <span>Run Code</span>
+                  <kbd className="hidden lg:inline-block rounded bg-slate-950/20 px-1.5 py-0.5 text-[10px] font-mono">
+                    Ctrl+Enter
+                  </kbd>
+                </>
               )}
-
-              {rightTab === "hints" && (
-                <HintPanel
-                  hints={selectedChallenge.hints}
-                  currentHintLevel={hintLevel}
-                  onRequestHint={handleRequestHint}
-                />
-              )}
-
-              {rightTab === "tests" && testResults.length > 0 && (
-                <TestResults
-                  results={testResults}
-                  testsPassed={testResults.filter((t) => t.passed).length}
-                  totalTests={testResults.length}
-                  xpReward={selectedChallenge.xpReward}
-                />
-              )}
-
-              {rightTab === "tests" && testResults.length === 0 && (
-                <div className="flex items-center justify-center h-full text-center p-6">
-                  <p className="text-slate-400">Run your solution code to execute test cases in VM sandbox</p>
-                </div>
-              )}
-            </div>
+            </button>
           </div>
         </div>
-      </main>
+      </header>
 
-      {/* Challenge Selection Modal */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <details className="group">
-          <summary className="list-none cursor-pointer">
-            <span className="inline-flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-violet-500 transition">
-              🎯 Pick Challenge ({solvedChallengeIds.length} Solved)
-            </span>
-          </summary>
-          <div className="absolute bottom-14 right-0 w-72 sm:w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-white/10 bg-slate-900 shadow-xl max-h-96 overflow-y-auto">
-            <div className="p-4 space-y-3">
-              {Object.entries(CHALLENGES_BY_CATEGORY).map(([category, challenges]) => (
-                <div key={category}>
-                  <h4 className="px-3 py-1.5 text-xs font-semibold uppercase text-violet-300 border-b border-white/5 mb-1">
-                    {category}
-                  </h4>
-                  {challenges.map((challenge) => {
-                    const isSolved = solvedChallengeIds.includes(challenge.id);
-                    return (
-                      <button
-                        key={challenge.id}
-                        onClick={(e) => {
-                          handleChallengeSelect(challenge.id);
-                          (e.target as HTMLElement).closest("details")?.removeAttribute("open");
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition flex items-center justify-between ${
-                          selectedChallenge?.id === challenge.id
-                            ? "bg-violet-500/20 text-white font-semibold"
-                            : "text-slate-300 hover:bg-white/10"
-                        }`}
-                      >
-                        <span className="truncate">{challenge.title}</span>
-                        {isSolved && <span className="text-emerald-400 font-bold ml-1">✓</span>}
-                      </button>
-                    );
-                  })}
+      {/* Main Split-Pane Workspace */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 overflow-hidden">
+        {/* Left Column: Code Editor (7 cols) */}
+        <section className="lg:col-span-7 flex flex-col rounded-2xl border border-white/10 bg-slate-950/90 shadow-2xl backdrop-blur-xl overflow-hidden min-h-[480px]">
+          {/* Editor Header */}
+          <div className="flex items-center justify-between border-b border-white/10 bg-slate-900/70 px-4 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex gap-1.5">
+                <span className="h-3 w-3 rounded-full bg-rose-500/80 inline-block" />
+                <span className="h-3 w-3 rounded-full bg-amber-500/80 inline-block" />
+                <span className="h-3 w-3 rounded-full bg-emerald-500/80 inline-block" />
+              </div>
+              <span className="text-xs font-mono font-semibold text-slate-300 pl-2">
+                main.{currentLangConfig.extension}
+              </span>
+            </div>
+            <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2">
+              <span>{code.split("\n").length} lines</span>
+              <span>•</span>
+              <span className="text-cyan-400">{currentLangConfig.framework}</span>
+            </div>
+          </div>
+
+          {/* Text Editor Container */}
+          <div className="flex-1 relative flex bg-[#090d1f] font-mono text-sm leading-relaxed overflow-hidden">
+            {/* Line Numbers Bar */}
+            <div className="w-12 py-3 bg-[#070a18] text-slate-600 text-right pr-3 select-none text-xs border-r border-white/5 flex flex-col overflow-hidden">
+              {code.split("\n").map((_, i) => (
+                <div key={i} className="leading-6">
+                  {i + 1}
                 </div>
               ))}
             </div>
-          </div>
-        </details>
-      </div>
 
-      {/* Solution Modal */}
-      <SolutionModal
-        isOpen={showSolution}
-        solution={selectedChallenge.solution}
-        onClose={() => setShowSolution(false)}
-      />
+            {/* Code Textarea */}
+            <textarea
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              spellCheck={false}
+              className="flex-1 p-3 bg-transparent text-slate-100 resize-none font-mono text-xs sm:text-sm leading-6 focus:outline-none focus:ring-0 selection:bg-cyan-500/30 overflow-y-auto whitespace-pre tab-4"
+              style={{ tabSize: 2 }}
+              placeholder={`Write ${currentLangConfig.name} backend code here...`}
+            />
+          </div>
+
+          {/* Editor Status Footer */}
+          <div className="border-t border-white/10 bg-[#070b1a] px-4 py-2 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" />
+              <span>Safe Sandboxed Execution</span>
+            </div>
+            <div className="text-slate-500 font-mono">UTF-8 • LF</div>
+          </div>
+        </section>
+
+        {/* Right Column: Console / HTTP / Info Panel (5 cols) */}
+        <section className="lg:col-span-5 flex flex-col rounded-2xl border border-white/10 bg-slate-950/90 shadow-2xl backdrop-blur-xl overflow-hidden min-h-[480px]">
+          {/* Navigation Tabs */}
+          <div className="flex items-center justify-between border-b border-white/10 bg-slate-900/70 px-4">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveTab("output")}
+                className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition ${
+                  activeTab === "output"
+                    ? "border-cyan-400 text-cyan-300"
+                    : "border-transparent text-slate-400 hover:text-white"
+                }`}
+              >
+                <Terminal className="h-3.5 w-3.5" />
+                <span>Console Output</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("http")}
+                className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition ${
+                  activeTab === "http"
+                    ? "border-cyan-400 text-cyan-300"
+                    : "border-transparent text-slate-400 hover:text-white"
+                }`}
+              >
+                <Globe className="h-3.5 w-3.5" />
+                <span>HTTP Test Client</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("info")}
+                className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition ${
+                  activeTab === "info"
+                    ? "border-cyan-400 text-cyan-300"
+                    : "border-transparent text-slate-400 hover:text-white"
+                }`}
+              >
+                <Info className="h-3.5 w-3.5" />
+                <span>Stack Info</span>
+              </button>
+            </div>
+
+            {executionStats && (
+              <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-slate-400">
+                <Clock className="h-3 w-3 text-cyan-400" />
+                <span>{executionStats.executionTimeMs}ms</span>
+                <span className="rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-1.5 py-0.2">
+                  {executionStats.provider}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 p-4 overflow-y-auto font-mono text-xs leading-relaxed bg-[#080c1d]">
+            {activeTab === "output" && (
+              <div className="space-y-3">
+                {outputLines.length === 0 && errorLines.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500 space-y-3">
+                    <Terminal className="h-8 w-8 text-slate-600" />
+                    <div>
+                      <p className="font-medium text-slate-400">Terminal Ready</p>
+                      <p className="text-[11px] text-slate-500">
+                        Click &quot;Run Code&quot; or press Ctrl+Enter to execute.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Stdout lines */}
+                    {outputLines.length > 0 && (
+                      <div className="space-y-1">
+                        {outputLines.map((line, idx) => (
+                          <div key={idx} className="flex gap-2 text-slate-300">
+                            <span className="text-cyan-500 select-none">&gt;</span>
+                            <span className="break-all whitespace-pre-wrap">{line}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Stderr lines */}
+                    {errorLines.length > 0 && (
+                      <div className="space-y-1 pt-2 border-t border-rose-500/20">
+                        {errorLines.map((err, idx) => (
+                          <div key={idx} className="flex gap-2 text-rose-400 font-semibold">
+                            <span className="text-rose-500 select-none">!</span>
+                            <span className="break-all whitespace-pre-wrap">{err}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Execution Footer Summary */}
+                    {executionStats && (
+                      <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                        <span className={executionStats.status === "success" ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+                          ● Process finished with exit code {executionStats.exitCode} ({executionStats.status})
+                        </span>
+                        <span>Execution: {executionStats.executionTimeMs}ms</span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {activeTab === "http" && (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-white/10 bg-slate-900/80 p-3 space-y-3">
+                  <p className="text-[11px] font-sans font-semibold text-cyan-300 uppercase tracking-wider">
+                    Simulated HTTP Request
+                  </p>
+                  <div className="flex gap-2">
+                    <select
+                      value={httpMethod}
+                      onChange={(e) => setHttpMethod(e.target.value)}
+                      className="rounded-lg border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs font-bold text-cyan-400 focus:outline-none"
+                    >
+                      <option value="GET">GET</option>
+                      <option value="POST">POST</option>
+                      <option value="PUT">PUT</option>
+                      <option value="DELETE">DELETE</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={httpPath}
+                      onChange={(e) => setHttpPath(e.target.value)}
+                      className="flex-1 rounded-lg border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400"
+                      placeholder="/api/resource"
+                    />
+                    <button
+                      onClick={handleSendMockHttp}
+                      disabled={isRunning}
+                      className="inline-flex items-center gap-1 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-cyan-400 transition"
+                    >
+                      <Send className="h-3 w-3" />
+                      <span>Send</span>
+                    </button>
+                  </div>
+
+                  {httpMethod !== "GET" && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-slate-400 font-sans">Request Body (JSON):</label>
+                      <textarea
+                        value={httpBody}
+                        onChange={(e) => setHttpBody(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-400 font-mono"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {httpResponse && (
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-emerald-400">
+                        {httpResponse.status} {httpResponse.statusText}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {httpResponse.headers["x-powered-by"]}
+                      </span>
+                    </div>
+                    <pre className="text-[11px] text-slate-200 overflow-x-auto bg-slate-950/80 p-2.5 rounded-lg border border-white/5">
+                      {JSON.stringify(httpResponse.data, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "info" && (
+              <div className="space-y-4 font-sans text-xs">
+                <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4 space-y-2">
+                  <h4 className="font-bold text-white text-sm">{currentLangConfig.name} Backend Overview</h4>
+                  <p className="text-slate-300 leading-relaxed">{currentLangConfig.description}</p>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4 space-y-2">
+                  <h4 className="font-bold text-white text-xs uppercase tracking-wider text-cyan-300">
+                    Key Features in {currentLangConfig.framework}
+                  </h4>
+                  <ul className="space-y-1.5 text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                      <span>Idiomatic backend patterns for high-concurrency microservices</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                      <span>Pre-configured sandbox with realistic simulated I/O</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                      <span>Interoperable REST and JSON payload handling</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
     </div>
+  );
+}
+
+export default function MultiLanguagePlaygroundPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#050814] flex items-center justify-center text-cyan-400 font-mono text-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+            <span>Loading Multi-Language Playground...</span>
+          </div>
+        </div>
+      }
+    >
+      <PlaygroundInner />
+    </Suspense>
   );
 }

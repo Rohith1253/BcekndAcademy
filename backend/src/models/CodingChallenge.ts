@@ -12,8 +12,9 @@ export interface ICodingChallenge extends Document {
   slug: string;
   description: string;
   category: string;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: "beginner" | "easy" | "medium" | "hard" | "advanced";
   language: string;
+  supportedLanguages: string[];
   starterCode: string;
   solutionTemplate: string;
   instructions: string;
@@ -45,11 +46,15 @@ const codingChallengeSchema = new Schema<ICodingChallenge>(
     category: { type: String, required: true, trim: true },
     difficulty: {
       type: String,
-      enum: ["easy", "medium", "hard"],
+      enum: ["beginner", "easy", "medium", "hard", "advanced"],
       default: "easy",
       required: true,
     },
     language: { type: String, default: "javascript" },
+    supportedLanguages: {
+      type: [String],
+      default: ["javascript", "typescript", "python", "go"],
+    },
     starterCode: { type: String, required: true },
     solutionTemplate: { type: String, default: "" },
     instructions: { type: String, required: true },

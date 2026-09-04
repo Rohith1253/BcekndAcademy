@@ -1,4 +1,4 @@
-export type ChallengeDifficulty = "easy" | "medium" | "hard";
+export type ChallengeDifficulty = "beginner" | "easy" | "medium" | "hard" | "advanced" | string;
 
 export interface VisibleTestItem {
   name: string;
@@ -8,23 +8,27 @@ export interface VisibleTestItem {
 }
 
 export interface CodingChallengeSummary {
-  _id: string;
+  _id?: string;
+  id?: string;
   title: string;
   slug: string;
   description: string;
   category: string;
   difficulty: ChallengeDifficulty;
   language: string;
+  supportedLanguages?: string[];
   xpReward: number;
   estimatedMinutes: number;
-  order: number;
+  order?: number;
   isCompleted?: boolean;
 }
 
 export interface CodingChallengeDetail extends CodingChallengeSummary {
   starterCode: string;
   solutionTemplate?: string;
+  solutionCode?: string;
   instructions: string;
+  hints?: string[];
   visibleTests: VisibleTestItem[];
 }
 
@@ -58,28 +62,31 @@ export interface SubmitSolutionResponse {
   visibleResults: TestRunResult[];
   hiddenTestsPassed: number;
   hiddenTestsTotal: number;
-  logs: ExecutionLog[];
   executionTime: number;
-  message: string;
+  logs?: ExecutionLog[];
+  message?: string;
+  unlockedAchievements?: any[];
+  userLevelInfo?: any;
 }
 
 export interface SubmissionHistoryItem {
   _id: string;
-  challengeSlug: string;
-  status: "passed" | "failed" | "error";
+  passed: boolean;
+  status?: string;
   score: number;
   testsPassed: number;
   totalTests: number;
   earnedXP: number;
-  executionTime: number;
   submittedAt: string;
   code: string;
 }
 
 export interface CodingProgressStats {
-  totalChallenges: number;
   completedCount: number;
-  totalCodingXP: number;
+  totalChallenges: number;
+  completionRate?: number;
+  totalEarnedXP?: number;
+  totalCodingXP?: number;
   currentStreak: number;
-  userLevel: number;
+  languageBreakdown?: Record<string, number>;
 }

@@ -1,15 +1,15 @@
-export const LEVEL_CONFIG = {
+export const LEVEL_CONFIG: Record<number, number> = {
   1: 0,
-  2: 500,
-  3: 1500,
-  4: 3000,
-  5: 6000,
-  6: 10000,
-  7: 15000,
-  8: 21000,
-  9: 28000,
-  10: 36500,
-} as const;
+  2: 100,
+  3: 250,
+  4: 500,
+  5: 1000,
+  6: 2000,
+  7: 3500,
+  8: 6000,
+  9: 10000,
+  10: 16000,
+};
 
 export const LEVEL_NAMES = [
   "Novice",
@@ -19,14 +19,15 @@ export const LEVEL_NAMES = [
   "Senior Dev",
   "Tech Lead",
   "Architect",
+  "Principal",
   "Master",
-  "Sage",
   "Legend",
 ] as const;
 
 export function calculateLevel(xp: number): number {
+  const safeXP = Math.max(0, xp || 0);
   for (let level = 10; level >= 1; level--) {
-    if (xp >= LEVEL_CONFIG[level as keyof typeof LEVEL_CONFIG]) {
+    if (safeXP >= (LEVEL_CONFIG[level] || 0)) {
       return level;
     }
   }
@@ -35,34 +36,44 @@ export function calculateLevel(xp: number): number {
 
 export function getNextLevelXP(level: number): number {
   const nextLevel = Math.min(level + 1, 10);
-  return LEVEL_CONFIG[nextLevel as keyof typeof LEVEL_CONFIG];
+  return LEVEL_CONFIG[nextLevel] || LEVEL_CONFIG[10];
 }
 
 export function getXPForLevel(level: number): number {
-  return LEVEL_CONFIG[level as keyof typeof LEVEL_CONFIG] || 0;
+  return LEVEL_CONFIG[level] || 0;
 }
 
-export function calculateXPProgress(currentXP: number, currentLevel: number) {
+export function calculateLevelProgress(totalXP: number) {
+  const currentXP = Math.max(0, totalXP || 0);
+  const currentLevel = calculateLevel(currentXP);
   const levelStart = getXPForLevel(currentLevel);
-  const levelEnd = getNextLevelXP(currentLevel);
-  const progress = currentXP - levelStart;
-  const needed = levelEnd - levelStart;
-  const percentage = (progress / needed) * 100;
+  const nextLevelXP = getNextLevelXP(currentLevel);
+
+  const currentLevelXP = currentXP - levelStart;
+  const neededXP = nextLevelXP - levelStart;
+  const progressPercentage =
+    neededXP > 0 ? Math.min(100, Math.round((currentLevelXP / neededXP) * 100)) : 100;
 
   return {
-    currentXP,
-    currentLevel,
-    levelStart,
-    levelEnd,
-    progress,
-    needed,
-    percentage: Math.min(percentage, 100),
+    level: currentLevel,
+    levelName: LEVEL_NAMES[currentLevel - 1] || "Developer",
+    totalXP: currentXP,
+    currentLevelXP,
+    nextLevelXP,
+    neededXP,
+    progressPercentage,
   };
 }
 
+export function calculateXPProgress(currentXP: number, currentLevel: number) {
+  return calculateLevelProgress(currentXP);
+}
+
 export function addXP(currentXP: number, xpToAdd: number) {
-  const newXP = currentXP + xpToAdd;
-  const oldLevel = calculateLevel(currentXP);
+  const safeCurrent = Math.max(0, currentXP || 0);
+  const safeAdd = Math.max(0, xpToAdd || 0);
+  const newXP = safeCurrent + safeAdd;
+  const oldLevel = calculateLevel(safeCurrent);
   const newLevel = calculateLevel(newXP);
   const leveledUp = newLevel > oldLevel;
 
@@ -71,6 +82,6 @@ export function addXP(currentXP: number, xpToAdd: number) {
     oldLevel,
     newLevel,
     leveledUp,
-    xpGained: xpToAdd,
+    xpGained: safeAdd,
   };
 }

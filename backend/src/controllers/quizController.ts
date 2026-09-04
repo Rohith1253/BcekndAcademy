@@ -1,98 +1,145 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../middleware/auth";
-import { Lesson } from "../models/Lesson";
-import { QuizResult } from "../models/Quiz";
-import { User } from "../models/User";
-import { addXP } from "../services/xpService";
-import { validateInput, QuizSubmissionSchema } from "../utils/validation";
+import { QuizAttempt } from "../models/QuizAttempt";
+import { ProgressService } from "../services/progressService";
+import { MULTI_LANGUAGE_LESSONS } from "../data/multi-language-lessons-data";
+import { ALL_REAL_LESSONS } from "../data/all-lessons-content";
 
+/**
+ * POST /api/quiz/submit
+ * Submits quiz answers, computes score, grants XP via ProgressService anti-farming rules.
+ */
 export async function submitQuiz(req: AuthenticatedRequest, res: Response) {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
-    const { lessonId, answers, timeSpent } = validateInput(QuizSubmissionSchema, req.body);
+    const { lessonSlug, courseSlug, answers, timeSpentSeconds } = req.body;
 
-    const lesson = await Lesson.findOne({ slug: lessonId }).lean();
-    if (!lesson || !lesson.quiz || !lesson.quiz.questions) {
-      return res.status(404).json({ success: false, error: "Quiz not found for this lesson" });
-    }
-
-    const questions = lesson.quiz.questions;
-    let correctCount = 0;
-    const evaluatedAnswers: Array<{ questionId: string; selectedOptionIndex: number; isCorrect: boolean }> = [];
-
-    answers.forEach((ans) => {
-      const q = questions.find((item: any) => item.id === ans.questionId || (item as any)._id === ans.questionId);
-      const isCorrect = q ? q.correctOptionIndex === ans.selectedOptionIndex : false;
-      if (isCorrect) correctCount++;
-      evaluatedAnswers.push({
-        questionId: ans.questionId,
-        selectedOptionIndex: ans.selectedOptionIndex,
-        isCorrect,
+    if (!lessonSlug || !answers || !Array.isArray(answers)) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required 'lessonSlug' or 'answers' array.",
       });
-    });
-
-    const scorePercentage = Math.round((correctCount / questions.length) * 100);
-
-    const previousAttempt = await QuizResult.findOne({
-      userId: req.user.userId,
-      lessonId: lesson._id,
-      score: { $gte: 70 },
-    });
-
-    const isFirstTimePass = scorePercentage >= 70 && !previousAttempt;
-
-    let xpEarned = 0;
-
-    if (isFirstTimePass) {
-      const dbUser = await User.findById(req.user.userId);
-      if (dbUser) {
-        xpEarned = 150;
-        const xpResult = addXP(dbUser.totalXP || 0, xpEarned);
-        dbUser.totalXP = xpResult.newXP;
-        dbUser.currentLevel = xpResult.newLevel;
-        await dbUser.save();
-      }
     }
 
-    const quizResult = new QuizResult({
-      userId: req.user.userId,
-      lessonId: lesson._id,
-      score: scorePercentage,
-      answers: evaluatedAnswers,
-      timeSpent,
-      xpEarned,
-      completedAt: new Date(),
+    // Find lesson quiz to verify correct answers securely
+    const multiLesson = MULTI_LANGUAGE_LESSONS.find((l) => l.slug === lessonSlug);
+    const legacyLesson = ALL_REAL_LESSONS.find((l) => l.slug === lessonSlug);
+    const masterQuiz = multiLesson?.quiz || legacyLesson?.quiz || [];
+
+    const evaluatedAnswers = answers.map((userAns: any) => {
+      const q = masterQuiz.find((mq: any) => mq.id === userAns.questionId);
+      const correctIdx = q ? (q.correctOptionIndex !== undefined ? q.correctOptionIndex : (q as any).correct) : 0;
+      const isCorrect = userAns.selectedOptionIndex === correctIdx;
+      return {
+        questionId: userAns.questionId,
+        selectedOptionIndex: userAns.selectedOptionIndex,
+        isCorrect,
+      };
     });
-    await quizResult.save();
+
+    const totalQuestions = evaluatedAnswers.length;
+    const correctCount = evaluatedAnswers.filter((a) => a.isCorrect).length;
+    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+    const result = await ProgressService.completeQuiz({
+      userId,
+      lessonSlug,
+      courseSlug: courseSlug || multiLesson?.courseSlug,
+      answers: evaluatedAnswers,
+      score,
+      timeSpentSeconds: Number(timeSpentSeconds) || 0,
+    });
 
     return res.status(200).json({
       success: true,
       data: {
-        score: scorePercentage,
-        passed: scorePercentage >= 70,
-        xpEarned,
-        totalQuestions: questions.length,
+        score,
         correctAnswers: correctCount,
-        resultId: quizResult._id,
+        totalQuestions,
+        isPassed: result.isPassed,
+        xpEarned: result.xpEarned,
+        attemptId: result.quizAttempt._id,
+        userLevelInfo: result.userLevelInfo,
+        unlockedAchievements: result.unlockedAchievements,
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message || "Failed to submit quiz" });
+    console.error("[QUIZ SUBMIT ERROR]", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to submit quiz",
+    });
   }
 }
 
-export async function getQuizResults(req: AuthenticatedRequest, res: Response) {
+/**
+ * GET /api/quizzes/history (also /api/quiz/history)
+ * Returns user's quiz attempt history.
+ */
+export async function getQuizHistory(req: AuthenticatedRequest, res: Response) {
   try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
-    const results = await QuizResult.find({ userId: req.user.userId }).sort({ createdAt: -1 }).lean();
-    return res.status(200).json({ success: true, data: { results, count: results.length } });
+    const { lessonSlug } = req.query;
+    const query: Record<string, any> = { userId };
+    if (lessonSlug) query.lessonSlug = lessonSlug;
+
+    const attempts = await QuizAttempt.find(query).sort({ completedAt: -1 }).limit(50).lean();
+
+    return res.status(200).json({
+      success: true,
+      data: attempts,
+    });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message || "Failed to fetch quiz results" });
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch quiz history",
+    });
+  }
+}
+
+/**
+ * GET /api/quizzes/stats (also /api/quiz/stats)
+ * Returns user's overall quiz stats.
+ */
+export async function getQuizStats(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const attempts = await QuizAttempt.find({ userId }).lean();
+    const totalAttempts = attempts.length;
+    const passedAttempts = attempts.filter((a) => a.score >= 70).length;
+    const averageScore =
+      totalAttempts > 0
+        ? Math.round(attempts.reduce((acc, a) => acc + a.score, 0) / totalAttempts)
+        : 0;
+    const perfectScores = attempts.filter((a) => a.score === 100).length;
+    const totalXPEarned = attempts.reduce((acc, a) => acc + (a.xpEarned || 0), 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalAttempts,
+        passedAttempts,
+        averageScore,
+        perfectScores,
+        totalXPEarned,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch quiz stats",
+    });
   }
 }
