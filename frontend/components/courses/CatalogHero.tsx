@@ -35,15 +35,15 @@ export default function CatalogHero({
 
         {/* Main Heading */}
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-          Master Backend{" "}
+          Your Backend Developer{" "}
           <span className="bg-gradient-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
-            Development
+            Learning Journey
           </span>
         </h1>
 
         {/* Subheading */}
         <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-          Build real backend skills through structured courses, hands-on practice, challenges, and projects. From foundational HTTP protocols to high-scale database modeling and production security.
+          Follow a structured path from backend fundamentals to building secure, production-ready backend applications.
         </p>
 
         {/* Learning Statistics Pills */}

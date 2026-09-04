@@ -11,6 +11,7 @@ import CatalogHero from "@/components/courses/CatalogHero";
 import ContinueLearningCard from "@/components/courses/ContinueLearningCard";
 import CourseCard from "@/components/courses/CourseCard";
 import CourseRoadmapSection from "@/components/courses/CourseRoadmapSection";
+import RecommendedLearningPath from "@/components/courses/RecommendedLearningPath";
 
 export default function CourseCatalogClient() {
   const { user } = useClient();
@@ -168,18 +169,27 @@ export default function CourseCatalogClient() {
             user={user}
           />
 
-          {/* ================= SECTION 3: COURSE DISCOVERY HEADER & FILTERS ================= */}
-          <div className="space-y-6">
+          {/* ================= SECTION 3: RECOMMENDED LEARNING PATH ================= */}
+          <div id="learning-path" className="scroll-mt-24">
+            <RecommendedLearningPath
+              courses={courses}
+              userProgressMap={userProgressMap}
+              isAuthenticated={Boolean(user)}
+            />
+          </div>
+
+          {/* ================= SECTION 4: COURSE DISCOVERY HEADER & FILTERS ================= */}
+          <div id="all-courses" className="space-y-6 scroll-mt-24 pt-8 border-t border-white/[0.08]">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400">
-                  Curriculum Paths
+                  Individual Courses Catalog
                 </p>
                 <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  Explore Courses
+                  Explore All Courses
                 </h2>
                 <p className="mt-1 text-xs sm:text-sm text-slate-400">
-                  Choose a learning path and build your backend skills step by step.
+                  Filter by category, skill level, or search individual curriculum modules.
                 </p>
               </div>
 

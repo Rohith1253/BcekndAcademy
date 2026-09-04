@@ -12,6 +12,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { getCourseTheme, COURSE_SYLLABUS_PREVIEWS } from "./course-theme";
+import { getLearningPathStep } from "@/lib/learningPath";
 
 interface CourseCardProps {
   course: any;
@@ -26,6 +27,7 @@ export default function CourseCard({
 }: CourseCardProps) {
   const [showPreview, setShowPreview] = useState(false);
   const theme = getCourseTheme(course.slug);
+  const pathStep = getLearningPathStep(course.slug);
   const Icon = theme.icon;
 
   const isCompleted = progress === 100;
@@ -52,6 +54,26 @@ export default function CourseCard({
     <div
       className={`course-card group relative flex flex-col justify-between rounded-[24px] border border-white/[0.1] bg-gradient-to-b ${theme.cardBgGradient} p-6 sm:p-7 backdrop-blur-xl shadow-xl transition-all duration-300 ease-out hover:-translate-y-1.5 ${theme.cardBorderHover}`}
     >
+      {/* Learning Path Step & Start Here Indicator */}
+      {pathStep && (
+        <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-white/[0.08]">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              STEP {pathStep.stepNumber} OF 5
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium">
+              Level {pathStep.levelNumber}: {pathStep.levelName}
+            </span>
+          </div>
+          {pathStep.isStartHere && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-md shadow-emerald-500/20 animate-pulse">
+              <Sparkles className="w-2.5 h-2.5" />
+              START HERE
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Top Header Row: Technology Icon + Category & Difficulty Badges */}
       <div>
         <div className="flex items-start justify-between gap-3 mb-5">
@@ -85,6 +107,14 @@ export default function CourseCard({
         <p className="mt-2.5 text-xs text-slate-300/90 leading-relaxed line-clamp-3">
           {course.shortDescription || course.description}
         </p>
+
+        {/* Learning Path Focus */}
+        {pathStep && (
+          <div className="mt-3 text-[11px] text-slate-300/90 bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5 leading-relaxed">
+            <span className="font-semibold text-cyan-400">Core Focus: </span>
+            <span>{pathStep.whyLearn}</span>
+          </div>
+        )}
 
         {/* Technology Tags */}
         {course.tags && course.tags.length > 0 && (
@@ -187,6 +217,22 @@ export default function CourseCard({
             <span className="font-mono">+{course.totalXP || 1770} XP</span>
           </div>
         </div>
+
+        {/* Learning Path Progression Helper */}
+        {pathStep?.nextCourseSlug && (
+          <div className="text-[11px] text-slate-400 flex items-center justify-between px-0.5 pt-1">
+            <span className="text-slate-500 font-medium">Next in sequence:</span>
+            <span className="text-cyan-400 font-mono font-medium">
+              Step {pathStep.stepNumber + 1} &rarr;
+            </span>
+          </div>
+        )}
+        {pathStep && !pathStep.nextCourseSlug && (
+          <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 px-0.5 pt-1 font-mono">
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            <span>Capstone Milestone &rarr; Certified!</span>
+          </div>
+        )}
 
         {/* Dynamic CTA Button */}
         <div className="pt-1">

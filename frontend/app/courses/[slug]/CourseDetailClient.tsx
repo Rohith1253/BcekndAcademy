@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Clock, Layers, Sparkles, ArrowRight, CheckCircle2, Trophy, Play } from "lucide-react";
 import { useClient } from "@/lib/store";
 import { getApiUrl } from "@/lib/http";
+import { getLearningPathStep } from "@/lib/learningPath";
 
 interface CourseDetailClientProps {
   slug: string;
@@ -12,6 +13,7 @@ interface CourseDetailClientProps {
 
 export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
   const { user } = useClient();
+  const pathStep = getLearningPathStep(slug);
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [progressData, setProgressData] = useState<any>(null);
@@ -93,6 +95,16 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
           className="rounded-[2.5rem] border border-white/10 bg-slate-950/80 p-8 shadow-2xl shadow-slate-950/40 backdrop-blur-xl lg:p-12"
         >
           <div className="flex flex-wrap items-center gap-3">
+            {pathStep && (
+              <span className="rounded-full bg-cyan-500/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300 border border-cyan-500/30">
+                Step {pathStep.stepNumber} of 5
+              </span>
+            )}
+            {pathStep?.isStartHere && (
+              <span className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-slate-950 shadow-md shadow-emerald-500/20">
+                <Sparkles className="h-3.5 w-3.5" /> Start Here
+              </span>
+            )}
             <span className="rounded-full bg-violet-500/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
               {course.category}
             </span>
@@ -182,6 +194,159 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
             </div>
           </div>
         </motion.div>
+
+        {/* Learning Path Context Banner */}
+        {pathStep && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-[2.5rem] border border-cyan-500/20 bg-gradient-to-r from-slate-950/90 via-cyan-950/20 to-slate-950/90 p-6 sm:p-8 backdrop-blur-xl shadow-xl space-y-6"
+          >
+            {/* Header row: step number, level, start here */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/20 text-cyan-300 font-mono font-bold text-sm border border-cyan-500/30">
+                  {pathStep.stepNumber}
+                </span>
+                <div>
+                  <div className="text-[11px] font-mono uppercase tracking-widest text-cyan-400 font-bold">
+                    Backend Developer Career Path • Step {pathStep.stepNumber} of 5
+                  </div>
+                  <div className="text-lg font-bold text-white">
+                    Level {pathStep.levelNumber}: {pathStep.levelName}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {pathStep.isStartHere ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-md shadow-emerald-500/20 animate-pulse">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Recommended Start Here
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-900 text-slate-300 border border-white/[0.08]">
+                    Sequential Progression
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Path Context Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+              {/* 1. Why Learn This */}
+              <div className="space-y-2 rounded-2xl bg-slate-900/60 p-5 border border-white/[0.06]">
+                <div className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4" />
+                  Why Learn This Course
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {pathStep.whyLearn}
+                </p>
+              </div>
+
+              {/* 2. Real-World Use Cases */}
+              <div className="space-y-2 rounded-2xl bg-slate-900/60 p-5 border border-white/[0.06]">
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                  <Layers className="w-4 h-4" />
+                  Real-World Use Cases
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {pathStep.realWorldBuild}
+                </p>
+              </div>
+
+              {/* 3. Prerequisites */}
+              <div className="space-y-2 rounded-2xl bg-slate-900/60 p-5 border border-white/[0.06]">
+                <div className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Prerequisites
+                </div>
+                {pathStep.prerequisites ? (
+                  <div className="text-xs text-slate-300">
+                    <span className="text-slate-400">Recommended before starting:</span>
+                    <div className="mt-1">
+                      {pathStep.prerequisites.slug ? (
+                        <a
+                          href={`/courses/${pathStep.prerequisites.slug}`}
+                          className="font-medium text-cyan-400 hover:underline flex items-center gap-1"
+                        >
+                          <span>{pathStep.prerequisites.title}</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="font-medium text-white">{pathStep.prerequisites.title}</span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-emerald-400/90 font-medium flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>None &bull; Beginner friendly (START HERE)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Skills Gained Tags */}
+            <div className="pt-1">
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 mr-2">
+                Core Competencies Gained:
+              </span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {pathStep.skillsGained.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[11px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/25 px-3 py-1 rounded-lg"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Next Step & Direct Progression Navigation */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-white/[0.08]">
+              <div>
+                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                  Path Progression:
+                </span>
+                <div className="text-sm font-semibold text-white mt-0.5">
+                  {pathStep.nextCourseSlug ? (
+                    <span className="text-cyan-300 flex items-center gap-1.5">
+                      <span>After completing this: Step {pathStep.stepNumber + 1} ({pathStep.nextCourseTitle})</span>
+                    </span>
+                  ) : (
+                    <span className="text-emerald-300 flex items-center gap-1.5">
+                      <Trophy className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Completing this finishes the Backend Developer Foundation!</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {pathStep.nextCourseSlug && (
+                  <a
+                    href={`/courses/${pathStep.nextCourseSlug}`}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-slate-200 hover:border-cyan-400/40 hover:text-white transition"
+                  >
+                    <span>Next Course in Path</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                <a
+                  href="/courses#learning-path"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/35 px-4 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/25 transition"
+                >
+                  <span>View All 5 Steps</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Modules & Lessons Syllabus */}
         <section className="space-y-6">
