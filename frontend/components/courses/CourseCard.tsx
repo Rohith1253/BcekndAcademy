@@ -11,7 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { getCourseTheme, COURSE_SYLLABUS_PREVIEWS } from "./course-theme";
+import { getCourseTheme, COURSE_SYLLABUS_PREVIEWS, getLanguageColorBadge } from "./course-theme";
 import { getLearningPathStep } from "@/lib/learningPath";
 
 interface CourseCardProps {
@@ -29,6 +29,7 @@ export default function CourseCard({
   const theme = getCourseTheme(course.slug);
   const pathStep = getLearningPathStep(course.slug);
   const Icon = theme.icon;
+  const langBadge = course.language ? getLanguageColorBadge(course.language) : null;
 
   const isCompleted = progress === 100;
   const isInProgress = progress > 0 && progress < 100;
@@ -74,7 +75,7 @@ export default function CourseCard({
         </div>
       )}
 
-      {/* Top Header Row: Technology Icon + Category & Difficulty Badges */}
+      {/* Top Header Row: Technology Icon + Language, Category & Difficulty Badges */}
       <div>
         <div className="flex items-start justify-between gap-3 mb-5">
           <div
@@ -83,14 +84,22 @@ export default function CourseCard({
             <Icon className="h-6 w-6" />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 justify-end">
+          <div className="flex flex-wrap items-center gap-1.5 justify-end">
+            {langBadge && course.language && (
+              <span
+                className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${langBadge.bg} border ${langBadge.border} ${langBadge.text}`}
+              >
+                {course.language}
+              </span>
+            )}
+
             <span
               className={`text-[11px] font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${theme.badgeBg} border ${theme.badgeBorder} ${theme.badgeText}`}
             >
               {course.category || "Backend"}
             </span>
 
-            <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider bg-white/[0.06] px-2.5 py-1 rounded-lg border border-white/[0.08]">
+            <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider bg-white/[0.06] px-2 py-0.5 rounded-md border border-white/[0.08]">
               {diffLabel}
             </span>
           </div>

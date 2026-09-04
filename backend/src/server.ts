@@ -17,6 +17,7 @@ import bookmarkRoutes from "./routes/bookmarkRoutes";
 import achievementRoutes from "./routes/achievementRoutes";
 import healthRoutes from "./routes/healthRoutes";
 import codingLabRoutes from "./routes/codingLabRoutes";
+import languageRoutes from "./routes/languageRoutes";
 import { getHealth } from "./controllers/healthController";
 
 dotenv.config();
@@ -97,6 +98,7 @@ app.use("/api/games", gameRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/achievements", achievementRoutes);
+app.use("/api/backend-languages", languageRoutes);
 app.use("/api/health", healthRoutes);
 app.get("/health", getHealth);
 

@@ -9,10 +9,43 @@ export async function getCourses(req: Request, res: Response) {
   try {
     const category = req.query.category as string;
     const difficulty = req.query.difficulty as string;
+    const language = req.query.language as string;
+    const framework = req.query.framework as string;
+    const learningPath = req.query.learningPath as string;
+    const search = req.query.search as string;
 
     const query: any = { published: true };
-    if (category && category !== "All") query.category = category;
-    if (difficulty && difficulty !== "All") query.difficulty = difficulty.toLowerCase();
+
+    if (language && language !== "All" && language !== "all") {
+      query.language = language.toLowerCase().trim();
+    }
+
+    if (category && category !== "All" && category !== "all") {
+      query.category = { $regex: new RegExp(`^${category.trim()}$`, "i") };
+    }
+
+    if (difficulty && difficulty !== "All" && difficulty !== "all") {
+      query.difficulty = difficulty.toLowerCase().trim();
+    }
+
+    if (learningPath && learningPath !== "All") {
+      query.learningPath = learningPath.trim();
+    }
+
+    if (framework) {
+      query.frameworks = { $in: [new RegExp(framework.trim(), "i")] };
+    }
+
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), "i");
+      query.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { shortDescription: searchRegex },
+        { tags: { $in: [searchRegex] } },
+        { frameworks: { $in: [searchRegex] } },
+      ];
+    }
 
     const courses = await Course.find(query).sort({ order: 1 }).lean();
 

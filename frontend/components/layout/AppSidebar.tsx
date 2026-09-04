@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Bot,
+  Cpu,
 } from "lucide-react";
 
 interface AppSidebarProps {
@@ -31,6 +32,7 @@ const navGroups = [
     items: [
       { label: "Home", href: "/", icon: Home },
       { label: "Courses", href: "/courses", icon: BookOpen },
+      { label: "Languages", href: "/backend-languages", icon: Cpu },
       { label: "Roadmap", href: "/roadmap", icon: Map },
     ],
   },

@@ -12,6 +12,7 @@ import AuthModal from "@/components/AuthModal";
 const authenticatedNavLinks = [
   { label: "Home", href: "/" },
   { label: "Courses", href: "/courses" },
+  { label: "Languages", href: "/backend-languages" },
   { label: "Coding Practice", href: "/challenges" },
   { label: "AI Coding Lab", href: "/coding-lab" },
   { label: "Roadmap", href: "/roadmap" },

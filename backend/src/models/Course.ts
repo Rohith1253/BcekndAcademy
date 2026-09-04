@@ -6,6 +6,10 @@ export interface ICourse extends Document {
   description: string;
   shortDescription?: string;
   category: string;
+  language: string;
+  frameworks: string[];
+  learningPath: string;
+  codeSnippet?: string;
   difficulty: "beginner" | "intermediate" | "advanced";
   level: string;
   thumbnail?: string;
@@ -48,6 +52,25 @@ const courseSchema = new Schema<ICourse>(
       type: String,
       required: true,
       default: "Backend",
+    },
+    language: {
+      type: String,
+      default: "javascript",
+      lowercase: true,
+      trim: true,
+    },
+    frameworks: {
+      type: [String],
+      default: [],
+    },
+    learningPath: {
+      type: String,
+      default: "backend-javascript",
+      trim: true,
+    },
+    codeSnippet: {
+      type: String,
+      default: "",
     },
     difficulty: {
       type: String,
@@ -99,5 +122,7 @@ const courseSchema = new Schema<ICourse>(
 // Indexes
 courseSchema.index({ published: 1, order: 1 });
 courseSchema.index({ category: 1 });
+courseSchema.index({ language: 1, published: 1 });
+courseSchema.index({ learningPath: 1 });
 
 export const Course = mongoose.models.Course || mongoose.model<ICourse>("Course", courseSchema);

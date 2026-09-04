@@ -4,8 +4,9 @@ import { connectDB } from "../config/db";
 import { Course } from "../models/Course";
 import { Module } from "../models/Module";
 import { Lesson } from "../models/Lesson";
-import { FIVE_COURSES } from "../data/courses-catalog-data";
+import { ALL_COURSES } from "../data/multi-language-courses-data";
 import { ALL_REAL_LESSONS } from "../data/all-lessons-content";
+import { MULTI_LANGUAGE_LESSONS } from "../data/multi-language-lessons-data";
 
 // Set of 12 lessons belonging to Course 1 (Backend Development with Node.js)
 const COURSE1_SLUGS = new Set([
@@ -25,15 +26,15 @@ const COURSE1_SLUGS = new Set([
 
 export async function seedMultiCourseCatalog() {
   console.log("==================================================");
-  console.log("    SEEDING MULTI-COURSE CATALOG & ALL LESSONS    ");
+  console.log("  SEEDING FULL MULTI-LANGUAGE BACKEND CURRICULUM  ");
   console.log("==================================================");
 
   await connectDB();
 
-  // 1. Seed 5 Published Courses
+  // 1. Seed All 26 Multi-Language Courses
   const savedCourses: Record<string, any> = {};
 
-  for (const cData of FIVE_COURSES) {
+  for (const cData of ALL_COURSES) {
     let course = await Course.findOne({ slug: cData.slug });
     if (!course) {
       course = new Course(cData);
@@ -43,10 +44,10 @@ export async function seedMultiCourseCatalog() {
       await course.save();
     }
     savedCourses[cData.slug] = course;
-    console.log(`✓ Course [${course.order}]: "${course.title}" (${course.slug})`);
+    console.log(`✓ Course [${course.order}]: "${course.title}" (${course.slug}) [${course.language}]`);
   }
 
-  // 2. Clear existing modules and lessons for deterministic seed
+  // 2. Clear existing modules and lessons for clean deterministic seed
   await Module.deleteMany({});
   await Lesson.deleteMany({});
 
@@ -56,6 +57,7 @@ export async function seedMultiCourseCatalog() {
   // Group lessons by course and module
   const modulesByCourse: Record<string, Map<string, any[]>> = {};
 
+  // Process existing 60 core lessons
   ALL_REAL_LESSONS.forEach((lesson) => {
     let courseSlug = "backend-node-js";
     if (COURSE1_SLUGS.has(lesson.slug)) {
@@ -113,13 +115,71 @@ export async function seedMultiCourseCatalog() {
     moduleMap.get(lesson.moduleSlug)!.push(lesson);
   });
 
-  for (const cData of FIVE_COURSES) {
+  // Process new multi-language lessons
+  MULTI_LANGUAGE_LESSONS.forEach((lesson) => {
+    const courseSlug = lesson.courseSlug;
+    if (!modulesByCourse[courseSlug]) {
+      modulesByCourse[courseSlug] = new Map();
+    }
+    const moduleMap = modulesByCourse[courseSlug];
+    if (!moduleMap.has(lesson.moduleSlug)) {
+      moduleMap.set(lesson.moduleSlug, []);
+    }
+    moduleMap.get(lesson.moduleSlug)!.push(lesson);
+  });
+
+  // Ensure every course has at least baseline modules if not populated
+  for (const cData of ALL_COURSES) {
     const parentCourse = savedCourses[cData.slug];
     if (!parentCourse) continue;
 
-    const moduleMap = modulesByCourse[cData.slug] || new Map();
-    let modOrder = 1;
+    let moduleMap = modulesByCourse[cData.slug];
+    if (!moduleMap || moduleMap.size === 0) {
+      moduleMap = new Map();
+      moduleMap.set(`${cData.slug}-module-1`, [
+        {
+          title: `${cData.title} - Core Architecture`,
+          slug: `${cData.slug}-intro`,
+          description: `Introduction to ${cData.title}`,
+          moduleSlug: `${cData.slug}-module-1`,
+          moduleName: `${cData.title} Foundations`,
+          order: 1,
+          category: cData.category,
+          difficulty: cData.difficulty,
+          xpReward: 100,
+          duration: 15,
+          content: [
+            {
+              type: "text",
+              title: `Introduction to ${cData.title}`,
+              body: cData.description,
+            },
+            {
+              type: "code",
+              title: "Initial Code Architecture",
+              language: cData.language === "csharp" ? "csharp" : cData.language,
+              code: cData.codeSnippet || "// Production server configuration",
+            },
+          ],
+          quiz: [
+            {
+              id: `${cData.slug}-q1`,
+              question: `What is the primary architectural focus of ${cData.title}?`,
+              options: [
+                cData.shortDescription,
+                "Front-end CSS styling",
+                "Mobile UI layouts",
+                "Desktop window managers",
+              ],
+              correctOptionIndex: 0,
+              explanation: `${cData.title} focuses on ${cData.shortDescription.toLowerCase()}.`,
+            },
+          ],
+        },
+      ]);
+    }
 
+    let modOrder = 1;
     for (const [modSlug, lessons] of moduleMap.entries()) {
       const firstLesson = lessons[0];
       const moduleDoc = new Module({
@@ -139,11 +199,11 @@ export async function seedMultiCourseCatalog() {
           title: lessonContent.title,
           description: lessonContent.description || lessonContent.summary || lessonContent.title,
           slug: lessonContent.slug,
-          order: lessonContent.order,
-          category: lessonContent.category,
-          difficulty: lessonContent.difficulty,
+          order: lessonContent.order || 1,
+          category: lessonContent.category || parentCourse.category,
+          difficulty: lessonContent.difficulty || parentCourse.difficulty,
           xpReward: lessonContent.xpReward || 100,
-          readingTimeMinutes: lessonContent.duration || 10,
+          readingTimeMinutes: lessonContent.duration || 12,
           summary: lessonContent.description || lessonContent.summary,
           content: lessonContent.content,
           contentSections: lessonContent.content,
@@ -167,11 +227,10 @@ export async function seedMultiCourseCatalog() {
   }
 
   console.log("\n==================================================");
-  console.log(" ✅ MULTI-COURSE SEEDING COMPLETE!");
-  console.log(`    • Courses: ${FIVE_COURSES.length} / 5`);
-  console.log(`    • Modules: 20 / 20`);
-  console.log(`    • Lessons: ${totalLessonsSeeded} / 60`);
-  console.log(`    • Quiz Questions: ${totalQuizzesSeeded} / 300`);
+  console.log(" ✅ MULTI-LANGUAGE CURRICULUM SEEDING COMPLETE!");
+  console.log(`    • Total Courses: ${ALL_COURSES.length}`);
+  console.log(`    • Total Lessons Seeded: ${totalLessonsSeeded}`);
+  console.log(`    • Total Quiz Questions Seeded: ${totalQuizzesSeeded}`);
   console.log("==================================================");
 }
 
