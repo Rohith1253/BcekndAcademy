@@ -33,6 +33,10 @@ const rawAllowedOrigins = [
   process.env.CLIENT_URL,
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
+  "http://localhost:3002",
+  "http://127.0.0.1:3002",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 ].filter(Boolean) as string[];
@@ -51,9 +55,17 @@ const corsOptions: cors.CorsOptions = {
     if (normalizedAllowedOrigins.includes(cleanOrigin)) {
       return callback(null, true);
     }
-    // Allow Vercel preview and production subdomains
+
+    // Allow localhost development ports in non-production environments
     try {
       const parsed = new URL(origin);
+      if (
+        (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") &&
+        (parsed.protocol === "http:" || parsed.protocol === "https:")
+      ) {
+        return callback(null, true);
+      }
+      // Allow Vercel preview and production subdomains
       if (parsed.protocol === "https:" && parsed.hostname.endsWith(".vercel.app")) {
         return callback(null, true);
       }
