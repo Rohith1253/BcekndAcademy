@@ -5,6 +5,16 @@ import { User } from "../models/User";
 import { RegisterSchema, LoginSchema, validateInput } from "../utils/validation";
 import { getJwtSecret, AuthenticatedRequest } from "../middleware/auth";
 
+function getAuthCookieOptions() {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+}
+
 export async function register(req: Request, res: Response) {
   try {
     const { name, email, password } = validateInput(RegisterSchema, req.body);
@@ -28,12 +38,7 @@ export async function register(req: Request, res: Response) {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getAuthCookieOptions());
 
     return res.status(200).json({
       success: true,
@@ -74,12 +79,7 @@ export async function login(req: Request, res: Response) {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getAuthCookieOptions());
 
     return res.status(200).json({
       success: true,
@@ -101,7 +101,12 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function logout(req: Request, res: Response) {
-  res.clearCookie("token");
+  const isProduction = process.env.NODE_ENV === "production";
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+  });
   return res.status(200).json({ success: true, message: "Logged out successfully" });
 }
 

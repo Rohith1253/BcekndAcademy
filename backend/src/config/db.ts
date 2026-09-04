@@ -1,7 +1,16 @@
 import mongoose from "mongoose";
 
 function getMongoUri(): string {
-  return process.env.MONGODB_URI || "mongodb://localhost:27017/backend-learning-platform";
+  const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+  if (!uri) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "FATAL: Database connection URI is missing. Set MONGO_URI or MONGODB_URI in your production environment variables."
+      );
+    }
+    return "mongodb://localhost:27017/backend-learning-platform";
+  }
+  return uri;
 }
 
 export async function connectDB() {
