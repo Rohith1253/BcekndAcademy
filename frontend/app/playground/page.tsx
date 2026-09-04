@@ -305,11 +305,11 @@ export default function PlaygroundPage() {
       <div className="fixed bottom-6 right-6 z-40">
         <details className="group">
           <summary className="list-none cursor-pointer">
-            <button className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-6 py-3 font-semibold text-slate-950 shadow-xl shadow-violet-500/30 hover:opacity-95 transition">
+            <span className="inline-flex items-center gap-2 rounded-md bg-violet-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-violet-500 transition">
               🎯 Pick Challenge ({solvedChallengeIds.length} Solved)
-            </button>
+            </span>
           </summary>
-          <div className="absolute bottom-16 right-0 w-80 rounded-[2rem] border border-white/10 bg-slate-950/95 backdrop-blur-xl shadow-2xl max-h-96 overflow-y-auto">
+          <div className="absolute bottom-14 right-0 w-72 sm:w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-white/10 bg-slate-900 shadow-xl max-h-96 overflow-y-auto">
             <div className="p-4 space-y-3">
               {Object.entries(CHALLENGES_BY_CATEGORY).map(([category, challenges]) => (
                 <div key={category}>

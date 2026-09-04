@@ -31,7 +31,7 @@ export default function LevelCard({ level, nextLevel }: LevelCardProps) {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`relative overflow-hidden rounded-[2rem] bg-gradient-to-br ${color} p-8 shadow-2xl shadow-slate-950/40`}
+      className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${color} p-8 shadow-md shadow-slate-950/40`}
     >
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-white blur-3xl" />
@@ -51,14 +51,14 @@ export default function LevelCard({ level, nextLevel }: LevelCardProps) {
         <p className="mt-3 text-2xl font-semibold text-white">{currentLevelName}</p>
 
         {level < 10 && (
-          <div className="mt-6 rounded-[1.5rem] bg-white/10 p-4 backdrop-blur-sm">
+          <div className="mt-6 rounded-md bg-white/10 p-4">
             <p className="text-sm text-white/70">Next: {nextLevelName}</p>
             <p className="mt-1 text-lg font-semibold text-white">Level {Math.min(nextLevel, 10)}</p>
           </div>
         )}
 
         {level === 10 && (
-          <div className="mt-6 rounded-[1.5rem] bg-white/20 p-4 backdrop-blur-sm">
+          <div className="mt-6 rounded-md bg-white/20 p-4">
             <p className="text-lg font-bold text-white">✨ You've Reached the Top! ✨</p>
           </div>
         )}

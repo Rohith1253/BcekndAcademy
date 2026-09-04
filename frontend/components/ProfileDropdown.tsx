@@ -48,7 +48,7 @@ export default function ProfileDropdown() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-white/10 bg-[var(--surface)] px-3.5 py-2 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-sm transition hover:bg-slate-100 dark:hover:bg-white/[0.08] cursor-pointer"
+        className="flex items-center gap-2 rounded-md border border-slate-300 dark:border-white/10 bg-[var(--surface)] px-3.5 py-2 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-sm transition hover:bg-slate-100 dark:hover:bg-white/[0.08] cursor-pointer"
         aria-haspopup="true"
         aria-expanded={open}
         aria-label="User account menu"
@@ -60,7 +60,7 @@ export default function ProfileDropdown() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-60 rounded-xl border border-slate-200 dark:border-white/10 bg-[var(--surface)] text-[var(--foreground)] shadow-xl z-50 p-3 backdrop-blur-md"
+          className="absolute right-0 mt-2 w-60 rounded-lg border border-slate-200 dark:border-white/10 bg-[var(--surface)] text-[var(--foreground)] shadow-lg z-50 p-3"
         >
           <div className="px-2 py-1.5 border-b border-slate-200 dark:border-white/10 mb-2">
             <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">

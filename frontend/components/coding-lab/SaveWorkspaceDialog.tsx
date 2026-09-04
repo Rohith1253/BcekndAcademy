@@ -37,13 +37,18 @@ export default function SaveWorkspaceDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl space-y-4">
+      <div className="w-full max-w-md rounded-lg border border-white/10 bg-slate-900 p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Save className="w-4 h-4 text-cyan-400" />
             <h3 className="text-base font-bold text-white">Save Workspace to Cloud</h3>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="text-slate-400 hover:text-white p-1"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -56,7 +61,7 @@ export default function SaveWorkspaceDialog({
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-cyan-500/50"
+              className="w-full rounded-md border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-cyan-500/50"
               placeholder="e.g. My Express API Project"
             />
           </div>
@@ -65,14 +70,14 @@ export default function SaveWorkspaceDialog({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-slate-400 hover:text-white transition"
+              className="px-4 py-2 rounded-md text-slate-400 hover:text-white transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving || !name.trim()}
-              className="rounded-xl bg-cyan-500 px-5 py-2 font-bold text-slate-950 hover:bg-cyan-400 transition disabled:opacity-50"
+              className="rounded-md bg-cyan-500 px-5 py-2 font-bold text-slate-950 hover:bg-cyan-400 transition disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save Workspace"}
             </button>

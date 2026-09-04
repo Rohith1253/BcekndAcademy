@@ -335,7 +335,7 @@ export default function AIAssistant({
         const errorMsg: AIMessageItem = {
           id: `err_${Date.now()}`,
           sender: "ai",
-          text: `⚠️ **Error:** ${err.message || "Failed to reach AI mentor"}.\n\nPlease check that GEMINI_API_KEY is configured in your backend environment, or try again.`,
+          text: `⚠️ **Error:** ${err.message || "Failed to reach AI mentor"}.\n\nPlease ensure your AI service configuration is active in your backend environment, or try again.`,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
         setMessages((prev) => [...prev, errorMsg]);
