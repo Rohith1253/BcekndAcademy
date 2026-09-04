@@ -100,6 +100,27 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 async function startServer() {
   try {
     await connectDB();
+
+    // Auto-seed initial catalog if database is empty
+    try {
+      const { Course } = await import("./models/Course");
+      const courseCount = await Course.countDocuments();
+      if (courseCount === 0) {
+        console.log("Empty course catalog detected. Auto-seeding 5 courses, 20 modules, 60 lessons...");
+        const { seedCourses } = await import("./scripts/seedCourses");
+        await seedCourses();
+      }
+      const { CodingChallenge } = await import("./models/CodingChallenge");
+      const challengeCount = await CodingChallenge.countDocuments();
+      if (challengeCount === 0) {
+        console.log("Empty challenge catalog detected. Auto-seeding 15 challenges...");
+        const { seedCodingChallenges } = await import("./scripts/seedCodingChallenges");
+        await seedCodingChallenges();
+      }
+    } catch (seedErr) {
+      console.warn("[AUTO-SEED WARNING]", seedErr);
+    }
+
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`==================================================`);
       console.log(`  🚀 BACKEND LEARNING ACADEMY API SERVER ACTIVE  `);
