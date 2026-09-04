@@ -14,6 +14,7 @@ import LessonExercise from "@/components/lesson/LessonExercise";
 import QuizPreview from "@/components/lesson/QuizPreview";
 import NotesPanel from "@/components/lesson/NotesPanel";
 import ProgressBar from "@/components/lesson/ProgressBar";
+import LessonContentRenderer from "@/components/learning/LessonContentRenderer";
 
 interface CourseLessonWorkspaceProps {
   courseSlug: string;
@@ -403,16 +404,12 @@ export default function CourseLessonWorkspace({
             <p className="text-slate-300 text-base leading-relaxed">{lesson.description}</p>
           </header>
 
-          {/* Main Markdown / Text Content */}
-          <article className="prose prose-invert max-w-none space-y-6 text-slate-200 text-base leading-relaxed">
-            {lesson.content ? (
-              <div 
-                className="space-y-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-white [&>h2]:mt-8 [&>h2]:mb-4 [&>h3]:text-xl [&>h3]:font-semibold [&>h3]:text-cyan-200 [&>p]:leading-relaxed [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-2 [&>pre]:bg-slate-900 [&>pre]:p-4 [&>pre]:rounded-xl [&>pre]:border [&>pre]:border-white/10"
-                dangerouslySetInnerHTML={{ __html: lesson.content }}
-              />
-            ) : (
-              <p className="text-slate-400">Content is being prepared for this lesson.</p>
-            )}
+          {/* Main Lesson Content */}
+          <article className="space-y-6 text-slate-200">
+            <LessonContentRenderer
+              content={lesson.content}
+              defaultLanguage={codeLanguage}
+            />
           </article>
 
           {/* Interactive Code Example */}

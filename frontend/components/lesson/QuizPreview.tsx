@@ -8,12 +8,12 @@ import { useClient } from "@/lib/store";
 import { api } from "@/lib/api";
 
 interface QuizPreviewProps {
-  questions: QuizQuestion[];
-  xpReward: number;
+  questions: QuizQuestion[] | { questions?: QuizQuestion[]; xpReward?: number } | any;
+  xpReward?: number;
   lessonId?: string;
 }
 
-export default function QuizPreview({ questions = [], xpReward, lessonId }: QuizPreviewProps) {
+export default function QuizPreview({ questions = [], xpReward = 50, lessonId }: QuizPreviewProps) {
   const { user, refreshUser } = useClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -29,7 +29,13 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
     message?: string;
   } | null>(null);
 
-  if (!questions || questions.length === 0) {
+  const normalizedQuestions: QuizQuestion[] = Array.isArray(questions)
+    ? questions
+    : questions && Array.isArray((questions as any).questions)
+    ? (questions as any).questions
+    : [];
+
+  if (!normalizedQuestions || normalizedQuestions.length === 0) {
     return null;
   }
 
@@ -40,8 +46,8 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
     return `q-${index}`;
   };
 
-  const currentQuestion = questions[currentIndex];
-  const currentKey = getQuestionKey(currentQuestion, currentIndex);
+  const currentQuestion = normalizedQuestions[currentIndex];
+  const currentKey = currentQuestion ? getQuestionKey(currentQuestion, currentIndex) : `q-${currentIndex}`;
   const currentAnswer = answers[currentKey];
   const isQuestionAnswered = currentAnswer !== undefined;
 
@@ -54,7 +60,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
 
   const handleNextQuestion = () => {
     setValidationError(null);
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < normalizedQuestions.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -68,8 +74,8 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
 
   // Find index of first unanswered question
   const getFirstUnansweredIndex = (): number => {
-    for (let i = 0; i < questions.length; i++) {
-      const key = getQuestionKey(questions[i], i);
+    for (let i = 0; i < normalizedQuestions.length; i++) {
+      const key = getQuestionKey(normalizedQuestions[i], i);
       if (answers[key] === undefined) return i;
     }
     return -1;
@@ -90,7 +96,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
     setSubmitting(true);
 
     try {
-      const formattedAnswers = questions.map((q, idx) => {
+      const formattedAnswers = normalizedQuestions.map((q, idx) => {
         const key = getQuestionKey(q, idx);
         return {
           questionId: q.id || key,
@@ -100,12 +106,12 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
 
       // Calculate client-side fallback breakdown
       let correctCount = 0;
-      questions.forEach((q, idx) => {
+      normalizedQuestions.forEach((q, idx) => {
         const key = getQuestionKey(q, idx);
         const expected = q.correctOptionIndex !== undefined ? q.correctOptionIndex : (q as any).correct;
         if (answers[key] === expected) correctCount++;
       });
-      const clientScore = Math.round((correctCount / questions.length) * 100);
+      const clientScore = Math.round((correctCount / normalizedQuestions.length) * 100);
 
       if (user && lessonId) {
         const json = await api.post("/api/quiz/submit", {
@@ -128,7 +134,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
           setServerResult({
             score: clientScore,
             correctAnswers: correctCount,
-            totalQuestions: questions.length,
+            totalQuestions: normalizedQuestions.length,
             xpEarned: clientScore >= 60 ? xpReward : 0,
             alreadyCompleted: false,
           });
@@ -137,7 +143,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
         setServerResult({
           score: clientScore,
           correctAnswers: correctCount,
-          totalQuestions: questions.length,
+          totalQuestions: normalizedQuestions.length,
           xpEarned: clientScore >= 60 ? xpReward : 0,
           alreadyCompleted: false,
         });
@@ -175,7 +181,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 bg-slate-900 px-4 py-2 rounded-full border border-white/10">
           <HelpCircle className="h-4 w-4 text-cyan-300 shrink-0" />
-          <span>{questions.length} Questions (+{xpReward} XP)</span>
+          <span>{normalizedQuestions.length} Questions (+{xpReward} XP)</span>
         </div>
       </div>
 
@@ -231,7 +237,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
           {/* Question-by-Question Review Breakdown */}
           <div className="space-y-6">
             <h4 className="text-xl font-semibold text-white">Detailed Answer Breakdown & Explanations</h4>
-            {questions.map((q, idx) => {
+            {normalizedQuestions.map((q, idx) => {
               const qKey = getQuestionKey(q, idx);
               const userSelected = answers[qKey];
               const expectedCorrect = q.correctOptionIndex !== undefined ? q.correctOptionIndex : (q as any).correct;
@@ -296,12 +302,12 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
           {/* Progress bar */}
           <div className="mb-6">
             <div className="flex justify-between text-xs text-slate-400 mb-2 font-medium">
-              <span>Question {currentIndex + 1} of {questions.length}</span>
-              <span>{answeredCount} of {questions.length} Answered</span>
+              <span>Question {currentIndex + 1} of {normalizedQuestions.length}</span>
+              <span>{answeredCount} of {normalizedQuestions.length} Answered</span>
             </div>
             <div className="h-2 rounded-full bg-white/5 overflow-hidden">
               <motion.div
-                animate={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+                animate={{ width: `${((currentIndex + 1) / normalizedQuestions.length) * 100}%` }}
                 className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-500"
               />
             </div>
@@ -360,7 +366,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
                   </button>
 
                   <div className="flex items-center gap-2">
-                    {currentIndex < questions.length - 1 && (
+                    {currentIndex < normalizedQuestions.length - 1 && (
                       <button
                         type="button"
                         onClick={handleNextQuestion}
@@ -376,7 +382,7 @@ export default function QuizPreview({ questions = [], xpReward, lessonId }: Quiz
                       onClick={handleSubmitQuiz}
                       disabled={submitting}
                       className={`rounded-full px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-slate-950 shadow-xl hover:opacity-95 disabled:opacity-40 transition cursor-pointer ${
-                        currentIndex === questions.length - 1
+                        currentIndex === normalizedQuestions.length - 1
                           ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"
                           : "bg-slate-800 text-slate-300 border border-white/10 hover:text-white"
                       }`}
