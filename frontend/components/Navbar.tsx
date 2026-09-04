@@ -8,19 +8,6 @@ import ProfileDropdown from "@/components/ProfileDropdown";
 import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
 import { useClient } from "@/lib/store";
 import AuthModal from "@/components/AuthModal";
-
-const authenticatedNavLinks = [
-  { label: "Home", href: "/" },
-  { label: "Courses", href: "/courses" },
-  { label: "Languages", href: "/backend-languages" },
-  { label: "Coding Practice", href: "/challenges" },
-  { label: "AI Coding Lab", href: "/coding-lab" },
-  { label: "Roadmap", href: "/roadmap" },
-  { label: "Games", href: "/games" },
-  { label: "Playground", href: "/playground" },
-  { label: "Dashboard", href: "/dashboard" },
-];
-
 interface NavbarProps {
   onToggleSidebar?: () => void;
 }
@@ -70,27 +57,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             </a>
           </div>
 
-          {/* Middle Navigation Section — Rendered ONLY for Authenticated Users */}
-          {user ? (
-            <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
-              {authenticatedNavLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className={`transition-colors duration-200 text-xs uppercase tracking-widest font-semibold ${
-                      isActive
-                        ? "text-cyan-600 dark:text-cyan-400"
-                        : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                    }`}
-                  >
-                    {link.label}
-                  </a>
-                );
-              })}
-            </nav>
-          ) : null}
+          {/* Middle Navigation Section Removed as requested (Navigation is fully handled by AppSidebar) */}
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-3">
