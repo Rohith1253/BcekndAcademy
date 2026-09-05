@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Code2, ArrowUpRight, Layers, Sparkles } from "lucide-react";
+import { Code2, ArrowUpRight, Layers } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function LanguageCompetencyWidget() {

@@ -52,6 +52,7 @@ export default function AIMentorPanel({
   const [loading, setLoading] = useState(false);
   const [hintLevel, setHintLevel] = useState(1);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const msgCounterRef = useRef(1);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,11 +82,11 @@ export default function AIMentorPanel({
     if (!text.trim() || loading) return;
 
     const userMsg: Message = {
-      id: "user-" + Date.now(),
+      id: "user-" + (++msgCounterRef.current),
       sender: "user",
       text,
       mode,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: "Just now",
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -112,10 +113,10 @@ export default function AIMentorPanel({
 
       if (res && res.data && res.data.message) {
         const mentorMsg: Message = {
-          id: "mentor-" + Date.now(),
+          id: "mentor-" + (++msgCounterRef.current),
           sender: "mentor",
           text: res.data.message,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          timestamp: "Just now",
         };
         setMessages((prev) => [...prev, mentorMsg]);
       } else {
@@ -126,11 +127,11 @@ export default function AIMentorPanel({
       const offlineGuidance = generateOfflineGuidance(text, currentCode, consoleError, exerciseTitle, hintLevel);
 
       const fallbackMsg: Message = {
-        id: "mentor-" + Date.now(),
+        id: "mentor-" + (++msgCounterRef.current),
         sender: "mentor",
         text: offlineGuidance,
         isOfflineFallback: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: "Just now",
       };
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {

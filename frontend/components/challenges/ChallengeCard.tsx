@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Clock, Sparkles, CheckCircle2, ArrowRight, Code2 } from "lucide-react";
+import { Clock, Zap, CheckCircle2, ArrowRight, Code2 } from "lucide-react";
 import type { CodingChallengeSummary } from "@/lib/challenge-types";
 
 interface ChallengeCardProps {
@@ -69,8 +69,8 @@ export default function ChallengeCard({ challenge }: ChallengeCardProps) {
             <Clock className="w-3.5 h-3.5 text-slate-500" />
             ~{challenge.estimatedMinutes}m
           </span>
-          <span className="flex items-center gap-1 text-cyan-300 font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="flex items-center gap-1 text-amber-300 font-semibold">
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
             +{challenge.xpReward} XP
           </span>
         </div>

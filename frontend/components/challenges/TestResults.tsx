@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, XCircle, Sparkles, ShieldCheck, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Zap, ShieldCheck, AlertCircle } from "lucide-react";
 import type { TestRunResult, SubmitSolutionResponse } from "@/lib/challenge-types";
 
 interface TestResultsProps {
@@ -78,8 +78,8 @@ export default function TestResults({
 
           {/* XP & Anti-farming Notice */}
           <div className="mt-3 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs font-mono">
-            <span className="flex items-center gap-1.5 text-fuchsia-300 font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
+            <span className="flex items-center gap-1.5 text-amber-300 font-semibold">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
               +{submitOutcome.earnedXP} XP Awarded
             </span>
 

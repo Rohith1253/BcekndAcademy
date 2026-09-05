@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Flame, Target, Trophy, ArrowRight, Zap, Sparkles } from "lucide-react";
+import { Flame, Target, Trophy, ArrowRight, Zap } from "lucide-react";
 import { useClient } from "@/lib/store";
 import { getApiUrl } from "@/lib/http";
 

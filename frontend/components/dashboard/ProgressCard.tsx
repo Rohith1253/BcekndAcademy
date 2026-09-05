@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Trophy, Play, Sparkles } from "lucide-react";
+import { ArrowRight, Trophy, Play, Zap } from "lucide-react";
 import { useClient } from "@/lib/store";
 import { api } from "@/lib/api";
 
@@ -52,7 +52,7 @@ export default function ProgressCard() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.24em] font-semibold text-cyan-300">
-              <Sparkles className="h-3.5 w-3.5" />
+              <Zap className="h-3.5 w-3.5" />
               <span>{isCompleted ? "Course Mastered" : "Resume Learning"}</span>
             </div>
             <h3 className="mt-2 text-2xl font-bold text-white">

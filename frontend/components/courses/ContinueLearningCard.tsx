@@ -7,7 +7,7 @@ import {
   ArrowRight,
   Clock,
   Layers,
-  Sparkles,
+  Zap,
   CheckCircle2,
   Rocket,
   Compass,
@@ -105,7 +105,7 @@ export default function ContinueLearningCard({
               <span>{targetCourse.totalModules || 4} Modules</span>
             </div>
             <div className="flex items-center gap-1.5 font-mono">
-              <Sparkles className="w-4 h-4 text-fuchsia-400" />
+              <Zap className="w-4 h-4 text-amber-400" />
               <span>+{targetCourse.totalXP || 1770} XP</span>
             </div>
           </div>

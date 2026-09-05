@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, ArrowLeft, ArrowRight, Trophy, Sparkles, BookOpen, Code2, Award } from "lucide-react";
+import { CheckCircle2, ArrowLeft, ArrowRight, Trophy, BookOpen, Code2, Award } from "lucide-react";
 import { useClient } from "@/lib/store";
 import { api } from "@/lib/api";
 import LessonHeader from "@/components/lesson/LessonHeader";
@@ -216,7 +216,7 @@ export default function LessonClientWrapper({
                   </div>
                   <div>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono font-bold mb-2">
-                      <Sparkles className="h-3.5 w-3.5" /> COURSE COMPLETED
+                      <Award className="h-3.5 w-3.5" /> COURSE COMPLETED
                     </div>
                     <h3 className="text-2xl font-black text-white">
                       Congratulations! You mastered {courseTitle}!
@@ -249,7 +249,7 @@ export default function LessonClientWrapper({
           {completionMessage && !courseCompletedCelebration && (
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-200">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-emerald-300" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-300" />
                 <span className="text-sm font-semibold">{completionMessage}</span>
               </div>
               <button

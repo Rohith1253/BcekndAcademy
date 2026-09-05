@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { Network, Play, CheckCircle2, RotateCcw, ArrowLeft, Shield, Sparkles } from "lucide-react";
+import { Network, Play, CheckCircle2, RotateCcw, ArrowLeft, Shield } from "lucide-react";
 import { getApiUrl } from "@/lib/http";
 import { api } from "@/lib/api";
 import { useClient } from "@/lib/store";

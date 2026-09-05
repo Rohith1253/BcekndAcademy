@@ -30,25 +30,20 @@ export async function seedMultiCourseCatalog() {
 
   await connectDB();
 
+  // Clear existing collections for deterministic idempotent seed
+  await Course.deleteMany({});
+  await Module.deleteMany({});
+  await Lesson.deleteMany({});
+
   // 1. Seed 5 Published Courses
   const savedCourses: Record<string, any> = {};
 
   for (const cData of FIVE_COURSES) {
-    let course = await Course.findOne({ slug: cData.slug });
-    if (!course) {
-      course = new Course(cData);
-      await course.save();
-    } else {
-      Object.assign(course, cData);
-      await course.save();
-    }
+    let course = new Course(cData);
+    await course.save();
     savedCourses[cData.slug] = course;
     console.log(`✓ Course [${course.order}]: "${course.title}" (${course.slug})`);
   }
-
-  // 2. Clear existing modules and lessons for deterministic seed
-  await Module.deleteMany({});
-  await Lesson.deleteMany({});
 
   let totalLessonsSeeded = 0;
   let totalQuizzesSeeded = 0;

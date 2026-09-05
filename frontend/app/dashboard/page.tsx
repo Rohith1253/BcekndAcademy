@@ -15,7 +15,6 @@ import {
   Lock, 
   PlayCircle, 
   Server, 
-  Sparkles, 
   Terminal, 
   Trophy, 
   Zap 

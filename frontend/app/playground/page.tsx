@@ -10,7 +10,6 @@ import {
   Check,
   Terminal,
   Code2,
-  Sparkles,
   Layers,
   Zap,
   ShieldCheck,
@@ -64,7 +63,7 @@ function PlaygroundInner() {
       setErrorLines([]);
       setExecutionStats(null);
     }
-  }, [urlLang]);
+  }, [urlLang, selectedLanguageKey]);
 
   const handleLanguageChange = (langKey: string) => {
     setSelectedLanguageKey(langKey);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, XCircle, Sparkles, Terminal, RotateCcw, Lightbulb, Play, ArrowRight, Bug, HelpCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Code2, Terminal, RotateCcw, Lightbulb, Play, ArrowRight, Bug, HelpCircle } from "lucide-react";
 import { api } from "@/lib/api";
 
 export interface ExerciseDefinition {
@@ -115,7 +115,7 @@ export default function LessonExercise({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4 mb-5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-            {exercise.type === "debug-code" ? <Bug className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+            {exercise.type === "debug-code" ? <Bug className="h-5 w-5" /> : <Code2 className="h-5 w-5" />}
           </div>
           <div>
             <span className="text-[11px] font-mono uppercase tracking-widest text-cyan-400 font-bold">

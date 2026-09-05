@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, XCircle, Clock, Sparkles, Code2 } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Code2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { SubmissionHistoryItem } from "@/lib/challenge-types";
 

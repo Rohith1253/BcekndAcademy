@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Terminal,
   Award,
-  Sparkles,
   ChevronRight,
   ShieldCheck,
   Globe,

@@ -19,7 +19,6 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  Sparkles,
   TrendingUp,
   Award,
   Layers as ArchitectureIcon,

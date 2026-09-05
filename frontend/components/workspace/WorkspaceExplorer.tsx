@@ -10,7 +10,6 @@ import {
   FileCode, 
   ChevronDown, 
   ChevronRight,
-  Sparkles,
   Lightbulb
 } from "lucide-react";
 import type { WorkspaceExercise } from "@/data/workspace-exercises";

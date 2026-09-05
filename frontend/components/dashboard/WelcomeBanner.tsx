@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Activity, Sparkles, Trophy } from "lucide-react";
+import { Activity, Terminal, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useClient } from "@/lib/store";
 import { calculateLevel } from "@/lib/xp-backend";
@@ -21,8 +21,8 @@ export default function WelcomeBanner() {
     >
       <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-3 rounded-md bg-violet-500/10 px-4 py-2 text-sm text-violet-200 ring-1 ring-violet-500/20">
-            <Sparkles className="h-4 w-4 text-violet-300" />
+          <div className="inline-flex items-center gap-3 rounded-md bg-cyan-500/10 px-4 py-2 text-sm text-cyan-200 ring-1 ring-cyan-500/20">
+            <Terminal className="h-4 w-4 text-cyan-300" />
             Dashboard Overview
           </div>
           <div>

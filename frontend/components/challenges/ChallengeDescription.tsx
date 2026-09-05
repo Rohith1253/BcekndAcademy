@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sparkles, Clock, Lightbulb, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
+import { Zap, Clock, Lightbulb, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import type { CodingChallengeDetail } from "@/lib/challenge-types";
 
 interface ChallengeDescriptionProps {
@@ -42,8 +42,8 @@ export default function ChallengeDescription({ challenge, isCompleted }: Challen
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5 text-cyan-400" /> ~{challenge.estimatedMinutes} mins
           </span>
-          <span className="flex items-center gap-1 text-fuchsia-300 font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" /> +{challenge.xpReward} XP
+          <span className="flex items-center gap-1 text-amber-300 font-semibold">
+            <Zap className="w-3.5 h-3.5 text-amber-400" /> +{challenge.xpReward} XP
           </span>
         </div>
       </div>

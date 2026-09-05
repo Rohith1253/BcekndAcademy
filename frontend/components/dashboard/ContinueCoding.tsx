@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Code2, ArrowRight, Sparkles, CheckCircle2, Flame, Trophy } from "lucide-react";
+import { Code2, ArrowRight, Zap, CheckCircle2, Flame, Trophy } from "lucide-react";
 import { api } from "@/lib/api";
 import type { CodingProgressStats, CodingChallengeSummary } from "@/lib/challenge-types";
 
@@ -97,8 +97,8 @@ export default function ContinueCoding() {
           </div>
 
           <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between">
-            <span className="flex items-center gap-1 text-xs font-mono text-fuchsia-300 font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
+            <span className="flex items-center gap-1 text-xs font-mono text-amber-300 font-semibold">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
               +{nextChallenge?.xpReward || 50} XP
             </span>
 

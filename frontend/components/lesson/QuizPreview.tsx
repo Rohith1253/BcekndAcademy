@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, RotateCcw, Trophy, Sparkles, HelpCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Trophy, Zap, HelpCircle, AlertCircle } from "lucide-react";
 import type { QuizQuestion } from "@/data/lessons/types";
 import { useClient } from "@/lib/store";
 import { api } from "@/lib/api";
@@ -215,7 +215,7 @@ export default function QuizPreview({ questions = [], xpReward = 50, lessonId }:
 
             {/* Server XP Badge */}
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-violet-500/20 px-5 py-2 text-sm font-semibold text-violet-300 border border-violet-500/30">
-              <Sparkles className="h-4 w-4 text-violet-300 shrink-0" />
+              <Zap className="h-4 w-4 text-violet-300 shrink-0" />
               <span>
                 {serverResult.alreadyCompleted
                   ? "Previously Passed (0 additional XP)"

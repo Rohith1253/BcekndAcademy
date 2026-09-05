@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Gamepad2, ArrowRight, Sparkles } from "lucide-react";
+import { Gamepad2, ArrowRight, Zap } from "lucide-react";
 import { GAME_DEFINITIONS } from "@/games/registry";
 
 interface LessonGameBannerProps {
@@ -34,8 +34,8 @@ export default function LessonGameBanner({ lessonSlug }: LessonGameBannerProps) 
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-fuchsia-300 bg-fuchsia-500/10 border border-fuchsia-500/30 px-3 py-1.5 rounded-md">
-            <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-md">
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
             <span>+{game.xpReward} XP</span>
           </div>
 

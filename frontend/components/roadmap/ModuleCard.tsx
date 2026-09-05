@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Clock3, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Clock3, ShieldCheck, Zap } from "lucide-react";
 import type { RoadmapModule } from "@/components/roadmap/types";
 
 interface ModuleCardProps {

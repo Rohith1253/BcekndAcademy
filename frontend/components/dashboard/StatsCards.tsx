@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock3, Layers, Sparkles, Trophy } from "lucide-react";
+import { Clock3, Layers, Zap, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useClient } from "@/lib/store";
 import { calculateLevel } from "@/lib/xp-backend";
@@ -40,7 +40,7 @@ export default function StatsCards() {
     {
       title: "XP Earned",
       value: userXP,
-      icon: Sparkles,
+      icon: Zap,
       accent: "from-violet-500 to-fuchsia-500",
     },
     {

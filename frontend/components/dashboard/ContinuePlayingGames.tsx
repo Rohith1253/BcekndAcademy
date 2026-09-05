@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Gamepad2, ArrowRight, Trophy, Sparkles, Award } from "lucide-react";
+import { Gamepad2, ArrowRight, Trophy, Award } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function ContinuePlayingGames() {

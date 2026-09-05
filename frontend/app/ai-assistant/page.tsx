@@ -45,6 +45,7 @@ export default function AIAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const messageCounterRef = useRef(1);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,10 +56,10 @@ export default function AIAssistantPage() {
     if (!textToSend || loading) return;
 
     const userMsg: Message = {
-      id: "usr-" + Date.now(),
+      id: "usr-" + (++messageCounterRef.current),
       sender: "user",
       text: textToSend,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: "Just now"
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -83,19 +84,19 @@ export default function AIAssistantPage() {
       const replyText = res?.data?.reply || generateEducationalReply(textToSend);
 
       const aiMsg: Message = {
-        id: "ai-" + Date.now(),
+        id: "ai-" + (++messageCounterRef.current),
         sender: "ai",
         text: replyText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: "Just now"
       };
 
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
       const fallbackMsg: Message = {
-        id: "ai-" + Date.now(),
+        id: "ai-" + (++messageCounterRef.current),
         sender: "ai",
         text: generateEducationalReply(textToSend),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: "Just now"
       };
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {

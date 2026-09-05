@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Sparkles, Trophy, BookOpen, ChevronRight } from "lucide-react";
+import { Clock, Zap, Trophy, BookOpen, ChevronRight } from "lucide-react";
 import BookmarkButton from "@/components/lesson/BookmarkButton";
 import type { LessonData } from "@/data/lessons/types";
 
@@ -70,7 +70,7 @@ export default function LessonHeader({
         </div>
         <div className="rounded-[1.75rem] bg-slate-900/90 p-5">
           <div className="flex items-center gap-2 text-slate-300">
-            <Sparkles className="h-5 w-5 text-violet-300" />
+            <Zap className="h-5 w-5 text-violet-300" />
             <span className="text-xs uppercase tracking-wider font-medium">XP Reward</span>
           </div>
           <p className="mt-2 text-xl font-semibold text-white">+{lesson.xpReward || 100} XP</p>

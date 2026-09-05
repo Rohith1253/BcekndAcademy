@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Bolt, Sparkles, ArrowRight, Code2, Clock } from "lucide-react";
+import { Bolt, Zap, ArrowRight, Code2, Clock } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function DailyChallenge() {
@@ -65,7 +65,7 @@ export default function DailyChallenge() {
         <div className="mt-6 grid gap-4 grid-cols-2">
           <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-white shadow-inner shadow-white/5">
             <div className="inline-flex items-center gap-1.5 text-slate-400 text-xs font-mono uppercase tracking-wider">
-              <Sparkles className="h-4 w-4 text-cyan-400" />
+              <Zap className="h-4 w-4 text-cyan-400" />
               <span>XP Reward</span>
             </div>
             <p className="mt-2 text-2xl font-extrabold text-white">+{targetChallenge.xpReward} XP</p>

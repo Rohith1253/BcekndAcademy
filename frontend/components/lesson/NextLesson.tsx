@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, Sparkles, ArrowRight, Lock, CheckCircle2 } from "lucide-react";
+import { Clock, Zap, ArrowRight, Lock, CheckCircle2 } from "lucide-react";
 
 interface NextLessonProps {
   slug?: string;
@@ -39,7 +39,7 @@ export default function NextLesson({
         </div>
         <div className="rounded-[1.75rem] bg-slate-900/90 p-4">
           <div className="flex items-center gap-2 text-slate-300">
-            <Sparkles className="h-5 w-5 text-violet-300" />
+            <Zap className="h-5 w-5 text-violet-300" />
             <span className="text-sm font-medium">XP Reward</span>
           </div>
           <p className="mt-2 text-xl font-semibold text-white">+{xp} XP</p>

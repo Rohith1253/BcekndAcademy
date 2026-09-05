@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Copy, Check, Play, RotateCcw, Terminal, ShieldCheck, Sparkles, Clock, AlertCircle, ExternalLink } from "lucide-react";
+import { Copy, Check, Play, RotateCcw, Terminal, ShieldCheck, Clock, AlertCircle, ExternalLink } from "lucide-react";
 import { api } from "@/lib/api";
 
 interface InteractiveCodeBlockProps {

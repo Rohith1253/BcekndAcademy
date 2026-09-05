@@ -204,7 +204,7 @@ export default function AnalyticsDashboardPage() {
               ? activityDays
               : Array.from({ length: timeRange === "7d" ? 7 : 14 }).map((_, i) => ({
                   day: `Day ${i + 1}`,
-                  date: new Date(Date.now() - (7 - i) * 86400000).toLocaleDateString("en-US", { weekday: "short" }),
+                  date: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i % 7],
                   xp: i === 6 ? 150 : 0,
                   events: i === 6 ? 1 : 0,
                 }))

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bot, ArrowRight, Plus, Clock, Terminal, Sparkles } from "lucide-react";
+import { Bot, ArrowRight, Plus, Clock, Terminal } from "lucide-react";
 import { api } from "@/lib/api";
 import type { SavedWorkspace } from "@/lib/coding-lab-types";
 
@@ -49,7 +49,7 @@ export default function CodingLabRecentWidget() {
             <div className="flex items-center gap-2">
               <p className="text-xs uppercase tracking-[0.24em] text-slate-400">AI-Assisted Sandbox</p>
               <span className="flex items-center gap-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 text-[10px] font-medium text-indigo-300">
-                <Sparkles className="w-2.5 h-2.5" />
+                <Terminal className="w-2.5 h-2.5" />
                 Interactive
               </span>
             </div>

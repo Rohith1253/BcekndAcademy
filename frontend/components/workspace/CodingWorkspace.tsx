@@ -55,7 +55,7 @@ export default function CodingWorkspace({
   }, [activeExercise]);
 
   // Handle Code Execution
-  const handleRunCode = async () => {
+  const handleRunCode = React.useCallback(async () => {
     setIsRunning(true);
     try {
       const result = await executeCodeSafely(code, activeExercise.tests);
@@ -72,16 +72,16 @@ export default function CodingWorkspace({
     } finally {
       setIsRunning(false);
     }
-  };
+  }, [code, activeExercise]);
 
   // Handle Save
-  const handleSave = () => {
+  const handleSave = React.useCallback(() => {
     try {
       localStorage.setItem(`workspace_code_${activeExercise.id}`, code);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2000);
     } catch {}
-  };
+  }, [code, activeExercise.id]);
 
   // Keyboard shortcut Ctrl + Enter to run code, Ctrl + S to save
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function CodingWorkspace({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [code, activeExercise]);
+  }, [handleRunCode, handleSave]);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden select-none">

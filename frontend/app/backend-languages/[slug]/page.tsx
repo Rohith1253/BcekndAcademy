@@ -16,7 +16,6 @@ import {
   Activity,
   ArrowLeft,
   ArrowRight,
-  Sparkles,
   GitCompare,
   CheckCircle2,
   AlertTriangle,

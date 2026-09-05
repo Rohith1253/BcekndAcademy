@@ -8,7 +8,6 @@ import {
   Code2,
   Trophy,
   ArrowRight,
-  Sparkles,
   Layers,
   Terminal,
   Zap,
@@ -282,7 +281,7 @@ export default function Features() {
         <div className="rounded-lg border border-white/[0.12] bg-slate-900 p-8 sm:p-12 text-center relative overflow-hidden">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-3.5 py-1 rounded-md border border-cyan-500/20">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Terminal className="w-3.5 h-3.5" />
               <span>Start Learning Today</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
