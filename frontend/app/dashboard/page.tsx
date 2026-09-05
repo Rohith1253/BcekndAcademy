@@ -25,19 +25,16 @@ import { getApiUrl } from "@/lib/api";
 import BeginnerOnboardingModal, { LEARNER_STAGES, type LearnerProfile } from "@/components/learning/BeginnerOnboardingModal";
 
 const CURRICULUM_ROADMAP = [
-  { level: 1, slug: "javascript-foundations", title: "JavaScript Foundations", desc: "Variables, types, control flow & syntax" },
-  { level: 2, slug: "programming-logic", title: "Programming Logic", desc: "Algorithmic thinking & data manipulation" },
-  { level: 3, slug: "async-javascript", title: "Async JavaScript", desc: "Event loop, Promises & Async/Await" },
-  { level: 4, slug: "backend-node-js", title: "Node.js Fundamentals", desc: "Server runtime, HTTP & modules" },
-  { level: 5, slug: "express-rest-api", title: "Express.js & REST APIs", desc: "Middleware, routing & status codes" },
-  { level: 6, slug: "fastify-high-performance-apis", title: "High-Throughput APIs", desc: "Fastify schema compilation & plugins" },
-  { level: 7, slug: "mongodb-database", title: "MongoDB & Data Modeling", desc: "Schemas, queries & indexing" },
-  { level: 8, slug: "backend-auth-security", title: "Auth & JWT Security", desc: "Tokens, bcrypt & authorization" },
-  { level: 9, slug: "typescript-backend", title: "TypeScript for Backend", desc: "Type safety, generics & DTOs" },
-  { level: 10, slug: "nestjs-backend-architecture", title: "Enterprise NestJS", desc: "Clean architecture & dependency injection" },
-  { level: 11, slug: "production-security-hardening", title: "Security Hardening", desc: "CORS, Helmet, Rate Limiting & OWASP" },
-  { level: 12, slug: "caching-queues-realtime", title: "Caching & Queues", desc: "Redis, WebSockets & Message Queues" },
-  { level: 13, slug: "cloud-microservices-capstone", title: "Docker & Capstone", desc: "Containerization & Cloud Production" },
+  { level: 0, slug: "computer-software-foundations", title: "How Computers & Software Work", desc: "Hardware, CPU, RAM, OS, processes & terminal" },
+  { level: 1, slug: "universal-programming-fundamentals", title: "Universal Programming Logic", desc: "Language-agnostic logic, algorithms & flowcharts" },
+  { level: 2, slug: "javascript-foundations", title: "JavaScript Foundations", desc: "Variables, types, control flow & syntax" },
+  { level: 3, slug: "programming-logic", title: "Programming Logic", desc: "Algorithmic thinking & data manipulation" },
+  { level: 4, slug: "async-javascript", title: "Async JavaScript", desc: "Event loop, Promises & Async/Await" },
+  { level: 5, slug: "backend-node-js", title: "Node.js Fundamentals", desc: "Server runtime, HTTP & modules" },
+  { level: 6, slug: "express-rest-apis", title: "Express.js & REST APIs", desc: "Middleware, routing & status codes" },
+  { level: 7, slug: "mongodb-aggregation-design", title: "MongoDB & Data Modeling", desc: "Schemas, queries & indexing" },
+  { level: 8, slug: "authentication-security", title: "Auth & JWT Security", desc: "Tokens, bcrypt & authorization" },
+  { level: 9, slug: "system-architecture-microservices", title: "System Architecture & Caching", desc: "Redis, Docker, API gateways & microservices" },
 ];
 
 export default function DashboardPage() {

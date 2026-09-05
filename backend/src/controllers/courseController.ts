@@ -8,6 +8,8 @@ import { ProgressService, getLessonsForCourse } from "../services/progressServic
 import { ALL_COURSES } from "../data/multi-language-courses-data";
 import { MULTI_LANGUAGE_LESSONS } from "../data/multi-language-lessons-data";
 import { ALL_REAL_LESSONS } from "../data/all-lessons-content";
+import { CANONICAL_COURSES } from "../data/canonical-curriculum";
+import { CANONICAL_LESSONS } from "../data/canonical-lessons";
 
 function getParamString(param: string | string[] | undefined, defaultVal = ""): string {
   if (Array.isArray(param)) return param[0] || defaultVal;
@@ -79,6 +81,16 @@ export async function getCourseBySlug(req: AuthenticatedRequest, res: Response) 
     let course = await Course.findOne({ slug, published: true }).lean();
     if (!course) {
       course = ALL_COURSES.find((c) => c.slug === slug) as any;
+    }
+    if (!course) {
+      const canCourse = CANONICAL_COURSES.find((c) => c.id === slug || c.slug === slug);
+      if (canCourse) {
+        course = {
+          ...canCourse,
+          slug: canCourse.slug || canCourse.id,
+          order: canCourse.courseOrder,
+        } as any;
+      }
     }
 
     if (!course) {
@@ -165,7 +177,9 @@ export async function getCourseLesson(req: AuthenticatedRequest, res: Response) 
       }).lean();
     }
 
-    const course = ALL_COURSES.find((c) => c.slug === courseSlug) || { slug: courseSlug, title: courseSlug };
+    const course = ALL_COURSES.find((c) => c.slug === courseSlug) || 
+      CANONICAL_COURSES.find((c) => c.id === courseSlug || c.slug === courseSlug) || 
+      { slug: courseSlug, title: courseSlug };
 
     return res.status(200).json({
       success: true,

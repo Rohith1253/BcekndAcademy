@@ -9,6 +9,7 @@ import { CodingChallenge } from "../models/CodingChallenge";
 import { ALL_COURSES } from "../data/multi-language-courses-data";
 import { MULTI_LANGUAGE_LESSONS } from "../data/multi-language-lessons-data";
 import { ALL_REAL_LESSONS } from "../data/all-lessons-content";
+import { CANONICAL_LESSONS } from "../data/canonical-lessons";
 import { XPService } from "./xpService";
 import { LevelService } from "./levelService";
 import { StreakService } from "./streakService";
@@ -31,6 +32,9 @@ const COURSE1_SLUGS = new Set([
 ]);
 
 export function getLessonsForCourse(courseSlug: string): any[] {
+  const canonical = CANONICAL_LESSONS.filter((l) => l.courseSlug === courseSlug);
+  if (canonical.length > 0) return canonical.sort((a, b) => a.lessonOrder - b.lessonOrder);
+
   const multi = MULTI_LANGUAGE_LESSONS.filter((l) => l.courseSlug === courseSlug);
   if (multi.length > 0) return multi.sort((a, b) => a.order - b.order);
 
