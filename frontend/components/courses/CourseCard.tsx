@@ -1,273 +1,113 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import {
-  Clock,
+import { 
+  Clock, 
+  BookOpen, 
+  Trophy, 
+  ArrowRight, 
+  CheckCircle2, 
   Layers,
-  Sparkles,
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
+  Code2
 } from "lucide-react";
-import { getCourseTheme, COURSE_SYLLABUS_PREVIEWS, getLanguageColorBadge } from "./course-theme";
-import { getLearningPathStep } from "@/lib/learningPath";
+import type { CatalogCourse } from "@/data/courses-catalog-data";
 
 interface CourseCardProps {
-  course: any;
-  progress: number; // 0 - 100
-  isAuthenticated: boolean;
+  course: CatalogCourse;
+  progress?: number;
+  isAuthenticated?: boolean;
 }
 
-export default function CourseCard({
-  course,
-  progress = 0,
-  isAuthenticated,
-}: CourseCardProps) {
-  const [showPreview, setShowPreview] = useState(false);
-  const theme = getCourseTheme(course.slug);
-  const pathStep = getLearningPathStep(course.slug);
-  const Icon = theme.icon;
-  const langBadge = course.language ? getLanguageColorBadge(course.language) : null;
-
-  const isCompleted = progress === 100;
-  const isInProgress = progress > 0 && progress < 100;
-  const diffLabel = course.difficulty || course.level || "Intermediate";
-
-  // Real curriculum syllabus preview points
-  const syllabusPoints = COURSE_SYLLABUS_PREVIEWS[course.slug] || [
-    "Core backend system fundamentals & request lifecycle",
-    "Production architecture & controller separation",
-    "Database modeling & schema validation",
-    "Security hardening & testing masterclass",
-  ];
-
-  // CTA Text & Styling logic
-  let ctaText = "Start Learning";
-  if (isCompleted) {
-    ctaText = "Review Course";
-  } else if (isInProgress) {
-    ctaText = "Continue Learning";
-  }
+export default function CourseCard({ course, progress = 0 }: CourseCardProps) {
+  const isCompleted = progress >= 100;
+  const inProgress = progress > 0 && progress < 100;
 
   return (
-    <div
-      className={`course-card group relative flex flex-col justify-between rounded-md border border-gray-600 bg-gray-900 p-6 sm:p-7 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 ${theme.cardBorderHover}`}
-    >
-      {/* Learning Path Step & Start Here Indicator */}
-      {pathStep && (
-        <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-white/[0.08]">
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-              STEP {pathStep.stepNumber} OF 5
+    <div className="course-card group relative flex flex-col justify-between rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md transition-all duration-200 hover:border-cyan-500/40 hover:bg-slate-900/90">
+      
+      <div className="space-y-4">
+        {/* Top Badges */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-400">
+            {course.level || (course.levelNumber ? `Level ${course.levelNumber}` : "Course")}
+          </span>
+
+          {isCompleted ? (
+            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Completed
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">
-              Level {pathStep.levelNumber}: {pathStep.levelName}
+          ) : inProgress ? (
+            <span className="text-xs font-semibold text-cyan-400">
+              {progress}% Done
             </span>
-          </div>
-          {pathStep.isStartHere && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-md shadow-emerald-500/20 animate-pulse">
-              <Sparkles className="w-2.5 h-2.5" />
-              START HERE
+          ) : (
+            <span className="text-xs text-slate-500 font-mono">
+              {course.difficulty}
             </span>
           )}
+        </div>
+
+        {/* Title & Description */}
+        <div className="space-y-1.5">
+          <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
+            {course.title}
+          </h3>
+          <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+            {course.shortDescription || course.description}
+          </p>
+        </div>
+
+        {/* Why it matters note */}
+        {course.whyItMatters && (
+          <div className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-2.5 text-[11px] text-slate-400 leading-snug">
+            <span className="font-bold text-slate-300">Why learn this: </span>
+            {course.whyItMatters}
+          </div>
+        )}
+
+        {/* Metadata stats */}
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3 text-cyan-400" />
+            <span>{course.estimatedHours || 6}h</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <BookOpen className="w-3 h-3 text-cyan-400" />
+            <span>{course.totalLessons || 12} Lessons</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Trophy className="w-3 h-3 text-emerald-400" />
+            <span>{course.totalXP || 1500} XP</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Bar if active */}
+      {inProgress && (
+        <div className="mt-4 w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div 
+            className="bg-cyan-500 h-1.5 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       )}
 
-      {/* Top Header Row: Technology Icon + Language, Category & Difficulty Badges */}
-      <div>
-        <div className="flex items-start justify-between gap-3 mb-5">
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-2xl ${theme.badgeBg} border ${theme.badgeBorder} ${theme.badgeText} shadow-md transition-transform duration-300 group-hover:scale-105`}
-          >
-            <Icon className="h-6 w-6" />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 justify-end">
-            {langBadge && course.language && (
-              <span
-                className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${langBadge.bg} border ${langBadge.border} ${langBadge.text}`}
-              >
-                {course.language}
-              </span>
-            )}
-
-            <span
-              className={`text-[11px] font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${theme.badgeBg} border ${theme.badgeBorder} ${theme.badgeText}`}
-            >
-              {course.category || "Backend"}
-            </span>
-
-            <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider bg-white/[0.06] px-2 py-0.5 rounded-md border border-white/[0.08]">
-              {diffLabel}
-            </span>
-          </div>
-        </div>
-
-        {/* Title */}
-        <h3
-          className={`text-xl font-bold text-white transition-colors duration-200 leading-snug group-hover:${theme.textColor}`}
+      {/* CTA Button */}
+      <div className="mt-5 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+        <span className="text-[11px] text-slate-500 font-mono">
+          {course.frameworks?.slice(0, 2).join(", ") || course.language}
+        </span>
+        <Link
+          href={`/courses/${course.slug}`}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 px-3.5 py-1.5 text-xs font-bold text-slate-200 transition"
         >
-          {course.title}
-        </h3>
-
-        {/* Description */}
-        <p className="mt-2.5 text-xs text-slate-300/90 leading-relaxed line-clamp-3">
-          {course.shortDescription || course.description}
-        </p>
-
-        {/* Learning Path Focus */}
-        {pathStep && (
-          <div className="mt-3 text-[11px] text-slate-300/90 bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5 leading-relaxed">
-            <span className="font-semibold text-cyan-400">Core Focus: </span>
-            <span>{pathStep.whyLearn}</span>
-          </div>
-        )}
-
-        {/* Technology Tags */}
-        {course.tags && course.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {course.tags.slice(0, 4).map((tag: string) => (
-              <span
-                key={tag}
-                className="text-[10px] font-mono text-slate-400 bg-slate-950/70 px-2 py-0.5 rounded-md border border-white/[0.06]"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Section 7: Course Quick Preview (What you'll learn) */}
-        <div className="mt-4 pt-3 border-t border-white/[0.06]">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShowPreview(!showPreview);
-            }}
-            className="flex items-center justify-between w-full text-left text-[11px] font-semibold text-slate-400 hover:text-white transition cursor-pointer"
-          >
-            <span className="flex items-center gap-1.5 text-cyan-400">
-              <span>What you&apos;ll learn</span>
-              <span className="text-[10px] text-slate-500 font-mono">({syllabusPoints.length} topics)</span>
-            </span>
-            {showPreview ? (
-              <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            )}
-          </button>
-
-          {showPreview && (
-            <div className="mt-2.5 space-y-1.5 rounded-xl bg-slate-950/80 p-3 border border-white/[0.06] text-[11px] text-slate-300">
-              {syllabusPoints.map((point, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="leading-tight">{point}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          <span>{isCompleted ? "Review" : inProgress ? "Continue" : "Start Course"}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
-      {/* Card Footer: Progress Bar, Metadata, Dynamic CTA */}
-      <div className="mt-6 pt-4 border-t border-white/[0.08] space-y-3.5">
-        {/* Progress Bar (Always present to convey learner progression state) */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] font-semibold">
-            <span className="text-slate-400">
-              {isCompleted
-                ? "Status"
-                : isInProgress
-                ? "In Progress"
-                : "Course Status"}
-            </span>
-
-            {isCompleted ? (
-              <span className="flex items-center gap-1 text-emerald-400 font-bold font-mono">
-                <CheckCircle2 className="w-3 h-3" />
-                <span>Completed (100%)</span>
-              </span>
-            ) : isInProgress ? (
-              <span className="text-cyan-400 font-bold font-mono">
-                {progress}% Complete
-              </span>
-            ) : (
-              <span className="text-slate-500 font-mono">0% Completed</span>
-            )}
-          </div>
-
-          <div className="h-1.5 rounded-full bg-slate-950/90 overflow-hidden border border-white/[0.06]">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isCompleted ? "bg-emerald-400" : theme.progressBarGradient
-              }`}
-              style={{ width: `${Math.max(progress, 0)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Course Metadata Stats */}
-        <div className="grid grid-cols-3 gap-2 text-[11px] text-slate-400 font-medium pt-1">
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span className="font-mono">{course.estimatedHours || 14}h</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span className="font-mono">{course.totalModules || 4} Mod</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" />
-            <span className="font-mono">+{course.totalXP || 1770} XP</span>
-          </div>
-        </div>
-
-        {/* Learning Path Progression Helper */}
-        {pathStep?.nextCourseSlug && (
-          <div className="text-[11px] text-slate-400 flex items-center justify-between px-0.5 pt-1">
-            <span className="text-slate-500 font-medium">Next in sequence:</span>
-            <span className="text-cyan-400 font-mono font-medium">
-              Step {pathStep.stepNumber + 1} &rarr;
-            </span>
-          </div>
-        )}
-        {pathStep && !pathStep.nextCourseSlug && (
-          <div className="text-[11px] text-emerald-400 flex items-center gap-1.5 px-0.5 pt-1 font-mono">
-            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-            <span>Capstone Milestone &rarr; Certified!</span>
-          </div>
-        )}
-
-        {/* Dynamic CTA Button */}
-        <div className="pt-1">
-          <Link
-            href={`/courses/${course.slug}`}
-            className={`flex items-center justify-between w-full rounded-xl py-2.5 px-4 text-xs font-bold transition-all duration-200 cursor-pointer ${
-              isCompleted
-                ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
-                : isInProgress
-                ? "border border-cyan-500/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25"
-                : "border border-white/10 bg-slate-900/80 text-white hover:border-cyan-400/40 hover:bg-slate-800"
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              {isInProgress && (
-                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-              )}
-              {isCompleted && (
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              )}
-              <span>{ctaText}</span>
-            </span>
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1.5" />
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

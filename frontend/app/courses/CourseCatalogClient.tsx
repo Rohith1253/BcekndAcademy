@@ -148,7 +148,7 @@ export default function CourseCatalogClient() {
       course.tags?.some((t: string) => t.toLowerCase().includes(query));
 
     return matchesLanguage && matchesCategory && matchesDifficulty && matchesSearch;
-  });
+  }).sort((a, b) => (a.order || 99) - (b.order || 99));
 
   // Calculate dynamic curriculum statistics across available courses
   const totalCoursesCount = courses.length || 26;
