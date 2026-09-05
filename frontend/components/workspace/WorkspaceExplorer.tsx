@@ -36,6 +36,26 @@ export default function WorkspaceExplorer({
   return (
     <div className="flex flex-col h-full bg-slate-950 border-r border-slate-800 text-slate-100 overflow-y-auto scrollbar-thin">
       
+      {/* Topic / Exercise Selector Dropdown */}
+      {allExercises.length > 0 && onSelectExercise && (
+        <div className="p-3 border-b border-slate-800 bg-slate-900/60">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+            Select Practice Exercise:
+          </label>
+          <select
+            value={exercise.id}
+            onChange={(e) => onSelectExercise(e.target.value)}
+            className="w-full rounded-xl bg-slate-950 border border-slate-800 px-2.5 py-1.5 text-xs text-cyan-300 font-semibold outline-none focus:border-cyan-400"
+          >
+            {allExercises.map((ex) => (
+              <option key={ex.id} value={ex.id}>
+                [{ex.difficulty}] {ex.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Exercise Title & Difficulty */}
       <div className="p-4 border-b border-slate-800 space-y-2">
         <div className="flex items-center justify-between gap-2">

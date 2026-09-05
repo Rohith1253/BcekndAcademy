@@ -41,6 +41,11 @@ export default function InteractiveCodeBlock({
     setExecutionStats(null);
   };
 
+  const handleOpenWorkspace = () => {
+    const encoded = encodeURIComponent(code);
+    window.open(`/workspace?code=${encoded}&language=${encodeURIComponent(language.toLowerCase())}`, "_blank");
+  };
+
   const handleOpenPlayground = () => {
     const langSlug = language.toLowerCase();
     const encoded = encodeURIComponent(code);
@@ -125,9 +130,18 @@ export default function InteractiveCodeBlock({
           </button>
 
           <button
+            onClick={handleOpenWorkspace}
+            title="Open in dedicated coding workspace"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/30 transition cursor-pointer"
+          >
+            <Terminal className="h-3.5 w-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Workspace</span>
+          </button>
+
+          <button
             onClick={handleOpenPlayground}
             title="Open in full playground workspace"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:bg-cyan-500/20 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white transition cursor-pointer"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             <span className="hidden md:inline">Playground</span>

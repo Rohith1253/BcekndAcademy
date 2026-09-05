@@ -203,6 +203,14 @@ export default function CodingWorkspace({
             exercise={activeExercise}
             activeFile={activeFileName}
             onSelectFile={(f) => setActiveFileName(f)}
+            allExercises={WORKSPACE_EXERCISES}
+            onSelectExercise={(exId) => {
+              const found = getExerciseById(exId);
+              if (found) {
+                setActiveExercise(found);
+                setActiveFileName("index.js");
+              }
+            }}
           />
         </aside>
 
