@@ -39,8 +39,8 @@ const navGroups = [
   {
     title: "PRACTICE & LABS",
     items: [
+      { label: "Coding Workspace", href: "/workspace", icon: Code },
       { label: "Coding Challenges", href: "/challenges", icon: Terminal },
-      { label: "Coding Lab", href: "/coding-lab", icon: Code },
       { label: "Architecture Labs", href: "/architecture-labs", icon: Layers },
       { label: "Playground", href: "/playground", icon: Terminal },
     ],

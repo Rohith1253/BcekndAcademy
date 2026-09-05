@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import Link from "next/link";
 import { 
-  CheckCircle2, ArrowLeft, ArrowRight, Trophy, Sparkles, BookOpen, 
+  CheckCircle2, ArrowLeft, ArrowRight, Trophy, BookOpen, 
   Code2, Award, Lock, Play, Clock, HelpCircle, ChevronLeft, ChevronRight,
-  RefreshCw, Check, AlertTriangle, ExternalLink
+  RefreshCw, Check, AlertTriangle, ExternalLink, Terminal
 } from "lucide-react";
 import { useClient } from "@/lib/store";
 import { api } from "@/lib/api";
@@ -369,9 +370,9 @@ export default function CourseLessonWorkspace({
               </div>
               {completionData.courseCompleted && (
                 <div className="mt-3 p-3 rounded-xl bg-violet-950/60 border border-violet-500/30 text-violet-200 flex items-center gap-3">
-                  <Sparkles className="h-5 w-5 text-fuchsia-400 shrink-0" />
+                  <Trophy className="h-5 w-5 text-emerald-400 shrink-0" />
                   <div>
-                    <span className="font-bold text-fuchsia-300">🎉 Course Completed!</span>
+                    <span className="font-bold text-emerald-300">🎉 Course Completed!</span>
                     <p className="text-xs text-violet-300">+{completionData.courseBonusXP || 500} Bonus XP Awarded!</p>
                   </div>
                 </div>
@@ -389,8 +390,8 @@ export default function CourseLessonWorkspace({
                 <Clock className="h-3 w-3 text-slate-400" />
                 {lesson.estimatedMinutes || 15} mins
               </span>
-              <span className="px-3 py-1 rounded-full bg-violet-500/10 text-violet-300 font-medium flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-violet-400" />
+              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 font-medium flex items-center gap-1.5">
+                <Trophy className="h-3 w-3 text-emerald-400" />
                 +{lesson.xpReward || 100} XP
               </span>
               {lesson.isPreview && (
@@ -420,6 +421,14 @@ export default function CourseLessonWorkspace({
                   <Code2 className="h-4 w-4" />
                   <span>Interactive Code Example</span>
                 </div>
+                <Link
+                  href={`/workspace?course=${courseSlug}&lesson=${lessonSlug}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold transition"
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>Open in Workspace</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
               <InteractiveCodeBlock
                 initialCode={lesson.codeExample || ""}
