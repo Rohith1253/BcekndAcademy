@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Bot,
-  Sparkles,
+  Lightbulb,
   Layers,
   ShieldCheck,
   Search,
@@ -122,7 +122,7 @@ export default function CodingLabCatalogPage() {
               </div>
 
               <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-slate-900/60 p-3 backdrop-blur-md">
-                <Sparkles className="h-5 w-5 text-cyan-400 shrink-0" />
+                <Lightbulb className="h-5 w-5 text-amber-400 shrink-0" />
                 <div className="text-left">
                   <p className="text-xs font-bold text-white">Learning Mode</p>
                   <p className="text-[11px] text-slate-400">Pedagogical hints</p>

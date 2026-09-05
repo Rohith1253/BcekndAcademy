@@ -4,18 +4,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Play, 
-  RotateCcw, 
   Save, 
   Check, 
   ChevronLeft, 
-  Layout, 
   Bot, 
-  FileCode, 
-  Terminal, 
-  CheckCircle2, 
-  Compass, 
-  Sparkles,
-  ArrowRight
+  Code2
 } from "lucide-react";
 import MonacoCodeEditor from "./MonacoCodeEditor";
 import WorkspaceExplorer from "./WorkspaceExplorer";
@@ -69,11 +62,12 @@ export default function CodingWorkspace({
       setExecutionResult(result);
     } catch (err: any) {
       setExecutionResult({
+        status: "error",
         success: false,
-        logs: [{ type: "error", message: err.message, timestamp: new Date().toLocaleTimeString() }],
+        logs: [{ type: "error", message: err.message || "Execution failed", timestamp: new Date().toLocaleTimeString() }],
         executionTimeMs: 0,
         testResults: [],
-        error: err.message,
+        error: err.message || "Execution error",
       });
     } finally {
       setIsRunning(false);
@@ -89,7 +83,7 @@ export default function CodingWorkspace({
     } catch {}
   };
 
-  // Keyboard shortcut Ctrl + Enter to run code
+  // Keyboard shortcut Ctrl + Enter to run code, Ctrl + S to save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -108,8 +102,8 @@ export default function CodingWorkspace({
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden select-none">
       
-      {/* Top Workspace Header Bar */}
-      <header className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 z-30 shrink-0">
+      {/* Top Minimal Workspace Header Bar */}
+      <header className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 z-30 shrink-0">
         
         {/* Left: Breadcrumbs & Back */}
         <div className="flex items-center gap-3">
@@ -129,7 +123,7 @@ export default function CodingWorkspace({
           </div>
         </div>
 
-        {/* Right: Actions (Run, Save, Mentor Toggle) */}
+        {/* Right: Actions (Save, Run, Mentor Toggle) */}
         <div className="flex items-center gap-2.5">
           <button
             onClick={handleSave}
@@ -197,7 +191,7 @@ export default function CodingWorkspace({
       {/* Master 3-Panel Desktop Layout */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* LEFT PANEL: Explorer & Instructions (280px to 320px) */}
+        {/* LEFT PANEL: Explorer & Instructions (320px) */}
         <aside className={`w-80 shrink-0 hidden lg:block ${mobileTab === "explorer" ? "!block w-full" : ""}`}>
           <WorkspaceExplorer
             exercise={activeExercise}

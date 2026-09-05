@@ -4,14 +4,16 @@ import React, { useState, useRef, useEffect } from "react";
 import { 
   Bot, 
   Send, 
-  Sparkles, 
   HelpCircle, 
   Lightbulb, 
   Bug, 
   Code2, 
   CheckCircle2, 
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  BookOpen,
+  RefreshCw,
+  Info
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -20,6 +22,8 @@ interface Message {
   sender: "user" | "mentor";
   text: string;
   mode?: string;
+  isOfflineFallback?: boolean;
+  isErrorState?: boolean;
   timestamp: string;
 }
 
@@ -62,12 +66,12 @@ export default function AIMentorPanel({
     } else if (actionType === "debug-code") {
       promptText = "Analyze my code for potential bugs or logic errors. Give me guidance on where to look.";
     } else if (actionType === "hint") {
-      promptText = `Give me Hint #${hintLevel} for "${exerciseTitle}". Do not give the full solution yet.`;
-      setHintLevel((prev) => prev + 1);
+      promptText = `Give me Hint Level ${hintLevel} for "${exerciseTitle}". (Level 1=Concept, Level 2=Logic direction, Level 3=Implementation).`;
+      setHintLevel((prev) => (prev >= 3 ? 1 : prev + 1));
     } else if (actionType === "explain-error") {
-      promptText = `Explain this console error and how to fix it: ${consoleError || "No active error"}`;
+      promptText = `Explain this runtime error and how to fix it: ${consoleError || "No active runtime error reported."}`;
     } else if (actionType === "review-solution") {
-      promptText = "Review my current solution for best practices and efficiency.";
+      promptText = "Review my current code for backend best practices, edge cases, and code efficiency.";
     }
 
     await handleSendMessage(promptText, actionType);
@@ -89,8 +93,7 @@ export default function AIMentorPanel({
     setLoading(true);
 
     try {
-      // Map UI action type → backend action string
-      const backendAction = mode || "explain";
+      const backendAction = mode || "chat";
       const payload = {
         action: backendAction,
         code: currentCode.slice(0, 4000),
@@ -104,32 +107,29 @@ export default function AIMentorPanel({
         },
       };
 
-      // Route: POST /api/coding-lab/ai (registered in codingLabRoutes.ts)
-      // Response shape: { success: boolean, data: { message: string, ... } }
-      const res = await api.post("/api/coding-lab/ai", payload).catch(async () => {
-        return {
-          success: true,
-          data: {
-            message: generateTutorReply(text, currentCode, consoleError, exerciseTitle),
-          },
+      // Call backend AI endpoint: POST /api/coding-lab/ai
+      const res = await api.post("/api/coding-lab/ai", payload);
+
+      if (res && res.data && res.data.message) {
+        const mentorMsg: Message = {
+          id: "mentor-" + Date.now(),
+          sender: "mentor",
+          text: res.data.message,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
-      });
+        setMessages((prev) => [...prev, mentorMsg]);
+      } else {
+        throw new Error("Invalid response format from AI service");
+      }
+    } catch (err: any) {
+      // Clear failure handling: do NOT pretend offline text is an AI response
+      const offlineGuidance = generateOfflineGuidance(text, currentCode, consoleError, exerciseTitle, hintLevel);
 
-      const replyText = res?.data?.message || generateTutorReply(text, currentCode, consoleError, exerciseTitle);
-
-      const mentorMsg: Message = {
-        id: "mentor-" + Date.now(),
-        sender: "mentor",
-        text: replyText,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-
-      setMessages((prev) => [...prev, mentorMsg]);
-    } catch {
       const fallbackMsg: Message = {
         id: "mentor-" + Date.now(),
         sender: "mentor",
-        text: generateTutorReply(text, currentCode, consoleError, exerciseTitle),
+        text: offlineGuidance,
+        isOfflineFallback: true,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
@@ -138,28 +138,41 @@ export default function AIMentorPanel({
     }
   };
 
-  function generateTutorReply(prompt: string, code: string, err: string | undefined, title: string): string {
+  // Structured Offline Guidance (clearly labeled as non-AI local guidance)
+  function generateOfflineGuidance(
+    prompt: string,
+    code: string,
+    err: string | undefined,
+    title: string,
+    level: number
+  ): string {
     const lower = prompt.toLowerCase();
     if (lower.includes("hint")) {
-      return "💡 **Tutor Hint:**\n\nLook closely at how your variables are assigned and returned. Check whether your variable names match what the instructions ask for.";
+      if (level === 1) {
+        return `💡 **[Offline Guidance — Hint Level 1: Concept Direction]**\n\nFor **${title}**, focus on what inputs are being provided and what output structure is expected. Check the instructions on the left panel.`;
+      } else if (level === 2) {
+        return `💡 **[Offline Guidance — Hint Level 2: Logic Direction]**\n\nCheck your variable names and assignments. Ensure your conditions or return statements handle the exact criteria specified in the tests.`;
+      } else {
+        return `💡 **[Offline Guidance — Hint Level 3: Implementation Direction]**\n\nVerify that you are using the correct return type (e.g. an object, array, or number). Compare your output against the "Expected Output" section.`;
+      }
     }
     if (lower.includes("debug") || lower.includes("error")) {
       if (err) {
-        return `🔍 **Error Diagnosis:**\n\nThe error "${err}" indicates that a value was accessed before being defined or there is a type mismatch. Verify your syntax and check object keys.`;
+        return `🔍 **[Offline Guidance — Error Analysis]**\n\nReported error: \`${err}\`.\nCheck for undefined variables, mismatched object keys, or syntax errors around the reported line.`;
       }
-      return "🔍 **Code Check:**\n\nYour code looks clean structurally! Make sure you test edge cases (like empty arrays or null values) before finalizing.";
+      return `🔍 **[Offline Guidance — Code Inspection]**\n\nEnsure all variables used in your code are properly declared with \`const\` or \`let\`, and that your function returns the expected value.`;
     }
-    if (lower.includes("explain how my current code works") || lower.includes("explain-code")) {
-      return "📖 **Code Breakdown:**\n\nYour code sets up the initial variables and passes them through your logic pipeline. Next, ensure the return value matches the expected output format.";
+    if (lower.includes("explain-code") || lower.includes("explain how")) {
+      return `📖 **[Offline Guidance — Code Structure]**\n\nYour code initializes data and applies logic steps. Test each step individually with \`console.log()\` to verify intermediate values.`;
     }
-    return `📚 **Concept Overview for "${title}":**\n\nIn backend engineering, this pattern ensures predictable data contracts and prevents runtime exceptions before they reach the database.`;
+    return `📚 **[Offline Guidance — Concept Overview: ${title}]**\n\nIn backend engineering, this pattern ensures predictable data contracts, prevents runtime errors, and isolates business logic.`;
   }
 
   return (
     <div className="flex flex-col h-full bg-slate-950 border-l border-slate-800 text-slate-100 overflow-hidden select-text">
       
       {/* Header Bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
             <Bot className="w-4 h-4" />
@@ -172,46 +185,70 @@ export default function AIMentorPanel({
 
         <button
           onClick={() => setMessages([messages[0]])}
-          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
           title="Reset conversation"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* Teacher Action Mode Buttons */}
-      <div className="p-2.5 bg-slate-900/40 border-b border-slate-800/80 grid grid-cols-2 gap-1.5">
+      {/* 6 AI Action Mode Buttons Grid */}
+      <div className="p-2.5 bg-slate-900/40 border-b border-slate-800/80 grid grid-cols-2 gap-1.5 shrink-0">
+        
+        {/* Mode 1: Explain Concept */}
         <button
-          onClick={() => handleAction("hint")}
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-200 text-[11px] font-semibold hover:bg-amber-500/20 transition cursor-pointer"
+          onClick={() => handleAction("explain-concept")}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-indigo-500/20 bg-indigo-500/10 text-indigo-200 text-[11px] font-semibold hover:bg-indigo-500/20 transition cursor-pointer text-left"
         >
-          <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-          <span>Give Me a Hint</span>
+          <BookOpen className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+          <span className="truncate">Explain Concept</span>
         </button>
 
-        <button
-          onClick={() => handleAction("debug-code")}
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-200 text-[11px] font-semibold hover:bg-rose-500/20 transition cursor-pointer"
-        >
-          <Bug className="w-3.5 h-3.5 text-rose-400" />
-          <span>Debug My Code</span>
-        </button>
-
+        {/* Mode 2: Explain Code */}
         <button
           onClick={() => handleAction("explain-code")}
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 text-[11px] font-semibold hover:bg-slate-800 hover:text-white transition cursor-pointer"
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 text-cyan-200 text-[11px] font-semibold hover:bg-cyan-500/20 transition cursor-pointer text-left"
         >
-          <Code2 className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Explain My Code</span>
+          <Code2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <span className="truncate">Explain My Code</span>
         </button>
 
+        {/* Mode 3: Debug Code */}
+        <button
+          onClick={() => handleAction("debug-code")}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-200 text-[11px] font-semibold hover:bg-rose-500/20 transition cursor-pointer text-left"
+        >
+          <Bug className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+          <span className="truncate">Debug My Code</span>
+        </button>
+
+        {/* Mode 4: Progressive Hint */}
+        <button
+          onClick={() => handleAction("hint")}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-200 text-[11px] font-semibold hover:bg-amber-500/20 transition cursor-pointer text-left"
+        >
+          <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="truncate">Hint (Lvl {hintLevel})</span>
+        </button>
+
+        {/* Mode 5: Explain Error */}
+        <button
+          onClick={() => handleAction("explain-error")}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-200 text-[11px] font-semibold hover:bg-amber-500/20 transition cursor-pointer text-left"
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span className="truncate">Explain Error</span>
+        </button>
+
+        {/* Mode 6: Review Solution */}
         <button
           onClick={() => handleAction("review-solution")}
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 text-[11px] font-semibold hover:bg-slate-800 hover:text-white transition cursor-pointer"
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-200 text-[11px] font-semibold hover:bg-emerald-500/20 transition cursor-pointer text-left"
         >
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Review Solution</span>
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="truncate">Review Solution</span>
         </button>
+
       </div>
 
       {/* Chat Messages Body */}
@@ -231,10 +268,18 @@ export default function AIMentorPanel({
               <div
                 className={`max-w-[90%] rounded-2xl p-3 text-xs leading-relaxed ${
                   isMentor
-                    ? "border border-slate-800 bg-slate-900/80 text-slate-200"
+                    ? msg.isOfflineFallback
+                      ? "border border-amber-500/30 bg-amber-500/5 text-amber-100"
+                      : "border border-slate-800 bg-slate-900/80 text-slate-200"
                     : "bg-cyan-500 text-slate-950 font-medium"
                 }`}
               >
+                {msg.isOfflineFallback && (
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-amber-400 mb-1.5 uppercase tracking-wider">
+                    <Info className="w-3 h-3" />
+                    <span>AI Server Offline — Showing Local Guidance</span>
+                  </div>
+                )}
                 <div className="whitespace-pre-wrap">{msg.text}</div>
                 <span className={`mt-1.5 block text-[9px] ${isMentor ? "text-slate-500" : "text-slate-800"}`}>
                   {msg.timestamp}
@@ -247,7 +292,7 @@ export default function AIMentorPanel({
         {loading && (
           <div className="flex items-center gap-2 text-xs text-cyan-400 py-1">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span>Analyzing code & formulating guidance...</span>
+            <span>Analyzing code & formulating mentor guidance...</span>
           </div>
         )}
 
@@ -255,7 +300,7 @@ export default function AIMentorPanel({
       </div>
 
       {/* Chat Input Bar */}
-      <div className="p-3 border-t border-slate-800 bg-slate-900/90 flex items-center gap-2">
+      <div className="p-3 border-t border-slate-800 bg-slate-900/90 flex items-center gap-2 shrink-0">
         <input
           type="text"
           value={input}

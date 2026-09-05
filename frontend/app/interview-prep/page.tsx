@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HelpCircle, CheckCircle2, XCircle, ArrowRight, Sparkles, BookOpen, ShieldCheck } from "lucide-react";
+import { HelpCircle, CheckCircle2, XCircle, ArrowRight, BookOpen, ShieldCheck } from "lucide-react";
 import { getApiUrl } from "@/lib/http";
 import { api } from "@/lib/api";
 import { useClient } from "@/lib/store";

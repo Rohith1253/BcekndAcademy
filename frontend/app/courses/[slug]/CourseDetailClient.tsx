@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
-  BookOpen, Clock, Layers, Sparkles, ArrowRight, CheckCircle2, 
+  BookOpen, Clock, Layers, ArrowRight, CheckCircle2, 
   Trophy, Play, Lock, Eye
 } from "lucide-react";
 import { useClient } from "@/lib/store";
@@ -117,7 +117,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
             )}
             {pathStep?.isStartHere && (
               <span className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-slate-950 shadow-md shadow-emerald-500/20">
-                <Sparkles className="h-3.5 w-3.5" /> Start Here
+                <CheckCircle2 className="h-3.5 w-3.5" /> Start Here
               </span>
             )}
             <span className="rounded-full bg-violet-500/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
@@ -202,7 +202,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
 
             <div className="rounded-[1.75rem] bg-slate-900/90 p-5">
               <div className="flex items-center gap-2 text-slate-400">
-                <Sparkles className="h-5 w-5 text-fuchsia-300" />
+                <Trophy className="h-5 w-5 text-amber-300" />
                 <span className="text-xs uppercase tracking-wider font-medium">XP Reward</span>
               </div>
               <p className="mt-2 text-2xl font-semibold text-white">+{course.totalXP} XP</p>
@@ -237,7 +237,7 @@ export default function CourseDetailClient({ slug }: CourseDetailClientProps) {
               <div className="flex items-center gap-2">
                 {pathStep.isStartHere ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-md shadow-emerald-500/20 animate-pulse">
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                     Recommended Start Here
                   </span>
                 ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Network, Terminal, CheckCircle2, ArrowRight, ShieldCheck, Clock, Sparkles } from "lucide-react";
+import { Network, Terminal, CheckCircle2, ArrowRight, ShieldCheck, Clock } from "lucide-react";
 import { getApiUrl } from "@/lib/http";
 
 export default function ApiLabsCatalogPage() {

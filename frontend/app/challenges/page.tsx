@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import ChallengeCard from "@/components/challenges/ChallengeCard";
 import ChallengeFilters from "@/components/challenges/ChallengeFilters";
 import { api } from "@/lib/api";
-import { Terminal, Sparkles, Code2, Trophy, Layers } from "lucide-react";
+import { Terminal, Code2, Trophy, Layers } from "lucide-react";
 import type { CodingChallengeSummary } from "@/lib/challenge-types";
 
 export default function ChallengesCatalogPage() {
@@ -128,6 +128,27 @@ export default function ChallengesCatalogPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Dedicated Coding Workspace Launcher Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl border border-cyan-500/30 bg-gradient-to-r from-cyan-950/30 via-slate-900 to-slate-950">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shrink-0">
+              <Code2 className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Full-Screen Coding Workspace</h3>
+              <p className="text-xs text-slate-400">Open the 3-panel Monaco Editor environment with AI Mentor and Web Worker execution.</p>
+            </div>
+          </div>
+
+          <a
+            href="/workspace"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-5 py-2.5 text-xs font-bold transition shrink-0 shadow-lg shadow-cyan-500/20"
+          >
+            <span>Launch Workspace</span>
+            <Terminal className="h-3.5 w-3.5" />
+          </a>
         </div>
 
         {/* Filters */}

@@ -8,8 +8,8 @@ import {
   Trophy, 
   ArrowRight, 
   CheckCircle2, 
-  Layers,
-  Code2
+  Terminal,
+  FileText
 } from "lucide-react";
 import type { CatalogCourse } from "@/data/courses-catalog-data";
 
@@ -22,6 +22,7 @@ interface CourseCardProps {
 export default function CourseCard({ course, progress = 0 }: CourseCardProps) {
   const isCompleted = progress >= 100;
   const inProgress = progress > 0 && progress < 100;
+  const isInteractive = course.executionSupport === "interactive" || course.language === "javascript" || course.language === "agnostic";
 
   return (
     <div className="course-card group relative flex flex-col justify-between rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md transition-all duration-200 hover:border-cyan-500/40 hover:bg-slate-900/90">
@@ -29,9 +30,24 @@ export default function CourseCard({ course, progress = 0 }: CourseCardProps) {
       <div className="space-y-4">
         {/* Top Badges */}
         <div className="flex items-center justify-between gap-2">
-          <span className="rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-400">
-            {course.level || (course.levelNumber ? `Level ${course.levelNumber}` : "Course")}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-cyan-400">
+              {course.level || (course.levelNumber !== undefined ? `Level ${course.levelNumber}` : "Course")}
+            </span>
+
+            {/* Execution Support Badge */}
+            {isInteractive ? (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                <Terminal className="w-3 h-3 text-emerald-400" />
+                <span>Interactive Sandbox</span>
+              </span>
+            ) : (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                <FileText className="w-3 h-3 text-slate-400" />
+                <span>Curriculum Guide</span>
+              </span>
+            )}
+          </div>
 
           {isCompleted ? (
             <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
@@ -43,7 +59,7 @@ export default function CourseCard({ course, progress = 0 }: CourseCardProps) {
               {progress}% Done
             </span>
           ) : (
-            <span className="text-xs text-slate-500 font-mono">
+            <span className="text-xs text-slate-500 font-mono capitalize">
               {course.difficulty}
             </span>
           )}

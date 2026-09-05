@@ -28,7 +28,6 @@ const NAV_LINKS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Learning Path", href: "/roadmap", icon: Map },
   { label: "Courses", href: "/courses", icon: BookOpen },
-  { label: "Workspace", href: "/workspace", icon: Code2 },
   { label: "Practice", href: "/challenges", icon: Terminal },
   { label: "AI Assistant", href: "/ai-assistant", icon: Bot },
 ];
