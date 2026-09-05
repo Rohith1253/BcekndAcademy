@@ -6,8 +6,15 @@
     "dev": "npx concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
-    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "build": "npm --prefix frontend run build",
+    "postinstall": "npm --prefix frontend install",
+    "build:all": "npm --prefix backend run build && npm --prefix frontend run build",
     "test": "npm --prefix backend run test"
+  },
+  "dependencies": {
+    "next": "16.2.10",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "concurrently": "^10.0.5"
