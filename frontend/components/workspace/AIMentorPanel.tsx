@@ -89,27 +89,33 @@ export default function AIMentorPanel({
     setLoading(true);
 
     try {
+      // Map UI action type → backend action string
+      const backendAction = mode || "explain";
       const payload = {
-        message: text,
+        action: backendAction,
+        code: currentCode.slice(0, 4000),
+        userMessage: text,
+        language: "javascript",
+        learningMode: true,
         context: {
           exerciseTitle,
           exerciseDescription,
-          codeSnippet: currentCode.slice(0, 2000),
           consoleError: consoleError || null,
-          mode: mode || "general",
         },
       };
 
-      const res = await api.post("/api/ai/mentor", payload).catch(async () => {
+      // Route: POST /api/coding-lab/ai (registered in codingLabRoutes.ts)
+      // Response shape: { success: boolean, data: { message: string, ... } }
+      const res = await api.post("/api/coding-lab/ai", payload).catch(async () => {
         return {
           success: true,
           data: {
-            reply: generateTutorReply(text, currentCode, consoleError, exerciseTitle),
+            message: generateTutorReply(text, currentCode, consoleError, exerciseTitle),
           },
         };
       });
 
-      const replyText = res?.data?.reply || generateTutorReply(text, currentCode, consoleError, exerciseTitle);
+      const replyText = res?.data?.message || generateTutorReply(text, currentCode, consoleError, exerciseTitle);
 
       const mentorMsg: Message = {
         id: "mentor-" + Date.now(),

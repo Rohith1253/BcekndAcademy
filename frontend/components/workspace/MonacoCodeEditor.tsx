@@ -1,8 +1,23 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import Editor from "@monaco-editor/react";
-import { Copy, Check, RotateCcw, Code2, Sparkles, CheckCircle2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Copy, Check, RotateCcw, Code2 } from "lucide-react";
+
+// Monaco Editor MUST be loaded client-side only.
+// Direct import causes SSR to attempt rendering Monaco's Worker API on the server,
+// which produces a silent [object Event] initialization failure at runtime.
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-[#070913]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+        <span className="text-xs font-mono text-slate-500">Loading editor...</span>
+      </div>
+    </div>
+  ),
+});
 
 interface MonacoCodeEditorProps {
   code: string;
@@ -32,7 +47,9 @@ export default function MonacoCodeEditor({
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {}
+    } catch {
+      // clipboard API unavailable in some environments — silently skip
+    }
   };
 
   const handleFormat = () => {
@@ -43,7 +60,7 @@ export default function MonacoCodeEditor({
 
   return (
     <div className="flex flex-col h-full bg-[#070913] border-r border-slate-800 select-text overflow-hidden">
-      
+
       {/* Editor Header Bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-slate-800">
         <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
