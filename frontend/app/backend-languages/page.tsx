@@ -79,7 +79,7 @@ export default function BackendLanguagesPage() {
     <div className="relative min-h-screen bg-[#070913] text-slate-100 overflow-x-hidden selection:bg-cyan-500/30 selection:text-cyan-200">
       <AnimatedBackground />
 
-      <main className="relative z-10 pt-28 pb-24">
+      <div className="relative z-10 pt-8 sm:pt-10 pb-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
           
           {/* ================= HERO SECTION ================= */}
@@ -407,7 +407,7 @@ export default function BackendLanguagesPage() {
           </section>
 
         </div>
-      </main>
+      </div>
 
       <Footer />
     </div>

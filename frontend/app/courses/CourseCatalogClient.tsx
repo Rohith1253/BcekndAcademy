@@ -174,7 +174,7 @@ export default function CourseCatalogClient() {
       {/* Ambient Dark Glowing Orbs Background */}
       <AnimatedBackground />
 
-      <main className="relative z-10 pt-28 pb-24">
+      <div className="relative z-10 pt-8 sm:pt-10 pb-24">
         <div ref={catalogRef} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
           {/* ================= SECTION 1: LEARNING HERO ================= */}
           <CatalogHero
@@ -359,7 +359,7 @@ export default function CourseCatalogClient() {
             userProgressMap={userProgressMap}
           />
         </div>
-      </main>
+      </div>
 
       <Footer />
     </div>

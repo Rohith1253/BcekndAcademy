@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import AppSidebar from "@/components/layout/AppSidebar";
-import Navbar from "@/components/Navbar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -61,6 +61,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
     pathname.startsWith("/playground") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/learn") ||
+    pathname.startsWith("/backend-languages") ||
+    pathname.startsWith("/architecture-labs") ||
+    pathname.startsWith("/api-labs") ||
+    pathname.startsWith("/ai-assistant") ||
+    pathname.startsWith("/games") ||
+    pathname.startsWith("/gamification") ||
+    pathname.startsWith("/progress") ||
     pathname === "/challenges" ||
     pathname === "/coding-lab"
   );
@@ -76,7 +83,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <Navbar onToggleSidebar={() => setMobileDrawerOpen((prev) => !prev)} />
+      {/* Mobile Drawer Floating Toggle Button (App pages only) */}
+      {shouldRenderSidebar && (
+        <div className="fixed top-3 left-3 z-30 lg:hidden">
+          <button
+            onClick={() => setMobileDrawerOpen(true)}
+            aria-label="Open Navigation Sidebar"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/90 text-slate-300 shadow-lg backdrop-blur-md hover:bg-slate-800 hover:text-white transition"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+      )}
 
       {shouldRenderSidebar && (
         <AppSidebar

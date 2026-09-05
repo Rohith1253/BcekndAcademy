@@ -196,9 +196,9 @@ function PlaygroundInner() {
   }, [handleRunCode]);
 
   return (
-    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col pt-16">
+    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col pt-0">
       {/* Top Controls Header */}
-      <header className="border-b border-white/10 bg-[#070b1a]/95 backdrop-blur-xl px-4 py-3 sm:px-6 sticky top-16 z-30">
+      <header className="border-b border-white/10 bg-[#070b1a]/95 backdrop-blur-xl px-4 py-3 sm:px-6 sticky top-0 z-30">
         <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-4">
           {/* Left: Language Stack Selector */}
           <div className="flex items-center gap-3">

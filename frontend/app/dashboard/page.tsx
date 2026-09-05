@@ -65,7 +65,7 @@ export default function DashboardPage() {
   const activeCourseTitle = learnerStage.recommendedCourseTitle;
 
   return (
-    <div className="min-h-screen bg-slate-950 pt-20 pb-20 px-4 sm:px-6 lg:px-10 text-slate-100">
+    <div className="min-h-screen bg-slate-950 pt-6 sm:pt-8 pb-20 px-4 sm:px-6 lg:px-10 text-slate-100">
       <div className="mx-auto max-w-7xl space-y-10">
 
         {/* ================= STAGE ONBOARDING BANNER ================= */}

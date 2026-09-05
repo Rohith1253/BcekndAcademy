@@ -136,8 +136,8 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 pt-20 pb-12 px-4 sm:px-6 lg:px-8 text-slate-100">
-      <div className="mx-auto max-w-5xl h-[calc(100vh-7rem)] flex flex-col rounded-3xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-slate-950 pt-6 sm:pt-8 pb-12 px-4 sm:px-6 lg:px-8 text-slate-100">
+      <div className="mx-auto max-w-5xl h-[calc(100vh-5rem)] flex flex-col rounded-3xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-2xl overflow-hidden">
         
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90">

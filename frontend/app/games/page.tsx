@@ -115,7 +115,7 @@ export default function GamesHubPage() {
     <div className="relative min-h-screen bg-[#070913] text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200 overflow-x-hidden">
       <AnimatedBackground />
 
-      <main className="relative z-10 pt-28 pb-24">
+      <div className="relative z-10 pt-8 sm:pt-10 pb-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Header Banner */}
           <div className="text-center max-w-3xl mx-auto space-y-4">
@@ -291,7 +291,7 @@ export default function GamesHubPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       <Footer />
     </div>

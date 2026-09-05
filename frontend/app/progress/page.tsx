@@ -127,7 +127,7 @@ export default function ProgressPage() {
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
   return (
-    <div className="min-h-screen bg-[#060813] px-4 py-24 text-slate-100 sm:px-6 lg:px-10">
+    <div className="min-h-screen bg-[#060813] px-4 pt-8 pb-20 text-slate-100 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl space-y-10">
         {/* Hero & Level Progress Banner */}
         <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-b from-slate-900/90 via-slate-950/90 to-[#070913] p-8 sm:p-12 shadow-2xl backdrop-blur-2xl">

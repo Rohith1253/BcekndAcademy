@@ -18,6 +18,7 @@ import {
   Layers,
   Cpu
 } from "lucide-react";
+import { useClient } from "@/lib/store";
 
 interface AppSidebarProps {
   isOpen?: boolean;
@@ -61,6 +62,7 @@ export default function AppSidebar({
   onToggleCollapse,
 }: AppSidebarProps) {
   const pathname = usePathname();
+  const { user } = useClient();
 
   const isLinkActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -72,11 +74,21 @@ export default function AppSidebar({
     <div className="flex h-full flex-col justify-between p-3">
       <div className="space-y-6">
         {/* Toggle / Header */}
-        <div className={`flex items-center pt-1 ${isCollapsed && !mobile ? "justify-center" : "justify-between px-2"}`}>
-          {(!isCollapsed || mobile) && (
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
-              Curriculum & Tools
-            </span>
+        <div className={`flex items-center pt-2 pb-1 ${isCollapsed && !mobile ? "justify-center" : "justify-between px-2"}`}>
+          {(!isCollapsed || mobile) ? (
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-950/40">
+                <Terminal className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-black tracking-wider text-white group-hover:text-cyan-400 transition">BACKEND</span>
+                <span className="text-[10px] font-mono text-cyan-400 font-bold leading-none">ACADEMY</span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/" title="Backend Academy" className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-indigo-600 text-white shadow-md">
+              <Terminal className="h-4 w-4" />
+            </Link>
           )}
           {!mobile && onToggleCollapse && (
             <button
@@ -141,15 +153,39 @@ export default function AppSidebar({
         ))}
       </div>
 
-      {/* Subtle Platform Version Footer */}
+      {/* Subtle Platform / User Footer */}
       <div className={`rounded-2xl border border-slate-800 bg-slate-900/60 ${isCollapsed && !mobile ? "p-2 text-center" : "p-3"}`}>
         {(!isCollapsed || mobile) ? (
           <div>
-            <p className="text-[11px] font-bold text-white">Backend Academy</p>
-            <p className="text-[10px] text-slate-500">13-Level Production Track</p>
+            {user ? (
+              <Link href="/profile" className="flex items-center gap-2 group">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 font-bold text-xs shrink-0">
+                  {user.name ? user.name[0].toUpperCase() : "U"}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[11px] font-bold text-white truncate group-hover:text-cyan-300 transition">{user.name || "Student"}</p>
+                  <p className="text-[10px] text-slate-500 truncate">{user.email || "Active Learner"}</p>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-white">Backend Academy</p>
+                  <p className="text-[10px] text-slate-500">13-Level Production Track</p>
+                </div>
+                <Link
+                  href="/login"
+                  className="rounded-lg bg-cyan-500/15 border border-cyan-500/30 px-2 py-1 text-[10px] font-semibold text-cyan-300 hover:bg-cyan-500/25 transition"
+                >
+                  Sign In
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="text-[10px] font-mono text-cyan-400 font-bold">BA</div>
+          <div className="text-[10px] font-mono text-cyan-400 font-bold">
+            {user ? (user.name ? user.name[0].toUpperCase() : "U") : "BA"}
+          </div>
         )}
       </div>
     </div>
@@ -160,7 +196,7 @@ export default function AppSidebar({
       {/* Desktop Fixed Sidebar */}
       <aside
         aria-label="Application Navigation"
-        className={`fixed left-0 top-14 bottom-0 z-40 hidden border-r border-slate-800 bg-slate-950/95 backdrop-blur-xl transition-all duration-300 ease-in-out lg:flex flex-col ${
+        className={`fixed left-0 top-0 bottom-0 z-40 hidden border-r border-slate-800 bg-slate-950/95 backdrop-blur-xl transition-all duration-300 ease-in-out lg:flex flex-col ${
           isCollapsed ? "w-[72px]" : "w-64"
         }`}
       >

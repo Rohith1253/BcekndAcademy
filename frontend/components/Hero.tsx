@@ -56,7 +56,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section ref={heroRef} className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
+    <section ref={heroRef} className="relative pt-16 pb-20 md:pt-20 md:pb-28 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           {/* Left Column: Headline & Action Controls */}
