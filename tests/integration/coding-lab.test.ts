@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { connectDB } from "../../backend/src/config/db";
 import { User } from "../../backend/src/models/User";
 import { CodingWorkspace } from "../../backend/src/models/CodingWorkspace";
@@ -148,7 +147,7 @@ export async function runCodingLabIntegrationTests(
   assert(retrieved?.name === "My Test Workspace", "Retrieved workspace belongs to user");
 
   // User isolation check: query with a different user ID
-  const fakeUserId = new mongoose.Types.ObjectId();
+  const fakeUserId = "507f1f77bcf86cd799439012";
   const isolatedQuery = await CodingWorkspace.findOne({ _id: workspace._id, userId: fakeUserId });
   assert(isolatedQuery === null, "Workspace is strictly isolated by userId");
 

@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { connectDB } from "../../backend/src/config/db";
 import { User } from "../../backend/src/models/User";
 import { ChallengeSubmission } from "../../backend/src/models/Challenge";

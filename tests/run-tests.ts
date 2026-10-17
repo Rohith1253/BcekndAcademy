@@ -1,27 +1,7 @@
 try {
   require("dotenv").config();
 } catch {}
-import mongoose from "mongoose";
 import { connectDB } from "../backend/src/config/db";
-
-// Import test modules
-import { runAuthUnitTests } from "./unit/auth.test";
-import { runValidationUnitTests } from "./unit/validation.test";
-import { runAuthorizationOwnershipTests } from "./authorization/ownership.test";
-import { runDatabaseModelTests } from "./database/models.test";
-import { runQuizChallengeIntegrationTests } from "./integration/quiz-challenge.test";
-import { runCourseTests } from "./integration/courses.test";
-import { runProgressFlowTests } from "./integration/progress-flow.test";
-import { runLessonExperienceTests } from "./integration/lesson-experience.test";
-import { runAdvancedQuizTests } from "./integration/advanced-quiz.test";
-import { runChallengePlaygroundTests } from "./integration/challenge-playground.test";
-import { runCodingChallengesIntegrationTests } from "./integration/coding-challenges.test";
-import { runCodingLabIntegrationTests } from "./integration/coding-lab.test";
-import { runGamesIntegrationTests } from "./integration/games.test";
-import { runSecurityRegressionTests } from "./security/security-regression.test";
-import { runQuizChallengeSecurityTests } from "./security/quiz-challenge-security.test";
-import { runPerformanceHealthTests } from "./performance/performance-health.test";
-import { runAssessmentPerformanceTests } from "./performance/assessment-performance.test";
 
 interface SectionResult {
   section: string;
@@ -62,6 +42,8 @@ export async function runAllTests() {
 
   // 1. Unit Tests
   if (filterArg === "all" || filterArg === "unit") {
+    const { runAuthUnitTests } = await import("./unit/auth.test");
+    const { runValidationUnitTests } = await import("./unit/validation.test");
     const tracker = createSectionTracker("Unit Tests");
     await runAuthUnitTests(tracker.assert);
     runValidationUnitTests(tracker.assert);
@@ -70,6 +52,7 @@ export async function runAllTests() {
 
   // 2. Authorization Tests
   if (filterArg === "all" || filterArg === "auth") {
+    const { runAuthorizationOwnershipTests } = await import("./authorization/ownership.test");
     const tracker = createSectionTracker("Authorization");
     runAuthorizationOwnershipTests(tracker.assert);
     tracker.finish();
@@ -77,6 +60,7 @@ export async function runAllTests() {
 
   // 3. Database Model Tests
   if (filterArg === "all" || filterArg === "db") {
+    const { runDatabaseModelTests } = await import("./database/models.test");
     const tracker = createSectionTracker("Database");
     runDatabaseModelTests(tracker.assert);
     tracker.finish();
@@ -84,6 +68,15 @@ export async function runAllTests() {
 
   // 4. Integration Tests
   if (filterArg === "all" || filterArg === "integration") {
+    const { runQuizChallengeIntegrationTests } = await import("./integration/quiz-challenge.test");
+    const { runCourseTests } = await import("./integration/courses.test");
+    const { runProgressFlowTests } = await import("./integration/progress-flow.test");
+    const { runLessonExperienceTests } = await import("./integration/lesson-experience.test");
+    const { runAdvancedQuizTests } = await import("./integration/advanced-quiz.test");
+    const { runChallengePlaygroundTests } = await import("./integration/challenge-playground.test");
+    const { runCodingChallengesIntegrationTests } = await import("./integration/coding-challenges.test");
+    const { runCodingLabIntegrationTests } = await import("./integration/coding-lab.test");
+    const { runGamesIntegrationTests } = await import("./integration/games.test");
     const tracker = createSectionTracker("Integration");
     
     console.log("-> Running Quiz & Challenge Integration Tests...");
@@ -119,6 +112,8 @@ export async function runAllTests() {
 
   // 5. Security Regression & Sandbox Tests
   if (filterArg === "all" || filterArg === "security") {
+    const { runSecurityRegressionTests } = await import("./security/security-regression.test");
+    const { runQuizChallengeSecurityTests } = await import("./security/quiz-challenge-security.test");
     const tracker = createSectionTracker("Security");
     await runSecurityRegressionTests(tracker.assert);
     await runQuizChallengeSecurityTests(tracker.assert);
@@ -127,6 +122,8 @@ export async function runAllTests() {
 
   // 6. Performance & Health Tests
   if (filterArg === "all" || filterArg === "performance") {
+    const { runPerformanceHealthTests } = await import("./performance/performance-health.test");
+    const { runAssessmentPerformanceTests } = await import("./performance/assessment-performance.test");
     const tracker = createSectionTracker("Performance");
     runPerformanceHealthTests(tracker.assert);
     await runAssessmentPerformanceTests(tracker.assert);

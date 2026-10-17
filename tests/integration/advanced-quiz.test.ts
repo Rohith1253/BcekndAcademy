@@ -1,9 +1,8 @@
-import mongoose from "mongoose";
 import { connectDB } from "../../backend/src/config/db";
 import { User } from "../../backend/src/models/User";
 import { QuizResult } from "../../backend/src/models/Quiz";
 import { Lesson } from "../../backend/src/models/Lesson";
-import { seedCourses } from "../../scripts/seed-courses";
+import { seedCourses } from "../../backend/src/scripts/seedCourses";
 import { hashPassword } from "../../backend/src/utils/auth";
 
 export async function runAdvancedQuizTests(assert: (condition: boolean, description: string) => void) {
@@ -33,7 +32,7 @@ export async function runAdvancedQuizTests(assert: (condition: boolean, descript
   await userB.save();
 
   const lessonDoc = await Lesson.findOne({ slug: "http-basics" }).lean();
-  const validLessonId = lessonDoc ? lessonDoc._id : new mongoose.Types.ObjectId();
+  const validLessonId = lessonDoc ? lessonDoc._id : userA._id;
 
   // 1. First Pass (100% Score) -> Awards XP
   const passResult1 = new QuizResult({

@@ -1,11 +1,10 @@
-import mongoose from "mongoose";
 import { connectDB } from "../../backend/src/config/db";
 import { User } from "../../backend/src/models/User";
 import { Lesson } from "../../backend/src/models/Lesson";
 import { Progress } from "../../backend/src/models/Progress";
 import { Note } from "../../backend/src/models/Note";
 import { Bookmark } from "../../backend/src/models/Bookmark";
-import { seedCourses } from "../../scripts/seed-courses";
+import { seedCourses } from "../../backend/src/scripts/seedCourses";
 import { hashPassword } from "../../backend/src/utils/auth";
 import { getLessonBySlug } from "../../backend/src/controllers/lessonController";
 

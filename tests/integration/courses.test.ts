@@ -1,9 +1,8 @@
-import mongoose from "mongoose";
 import { connectDB } from "../../backend/src/config/db";
 import { Course } from "../../backend/src/models/Course";
 import { Module } from "../../backend/src/models/Module";
 import { Lesson } from "../../backend/src/models/Lesson";
-import { seedCourses } from "../../scripts/seed-courses";
+import { seedCourses } from "../../backend/src/scripts/seedCourses";
 import { FIVE_COURSES } from "../../backend/src/data/courses-catalog-data";
 
 export async function runCourseTests(assert?: (cond: boolean, desc: string) => void) {

@@ -103,15 +103,13 @@ Run the automated test suite executing 65 regression tests:
 # Run complete test suite
 npm test
 
-# Run specific test suites
-npm run test:unit
-npm run test:integration
-npm run test:security
-npm run test:database
-npm run test:performance
-
-# Run code coverage report
-npm run test:coverage
+# Run specific backend test suites
+npm --prefix backend exec tsx ../tests/run-tests.ts unit
+npm --prefix backend exec tsx ../tests/run-tests.ts auth
+npm --prefix backend exec tsx ../tests/run-tests.ts db
+npm --prefix backend exec tsx ../tests/run-tests.ts integration
+npm --prefix backend exec tsx ../tests/run-tests.ts security
+npm --prefix backend exec tsx ../tests/run-tests.ts performance
 ```
 
 ### Production Build & Type Check
